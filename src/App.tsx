@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import {
 	DefaultKeyboardShortcutsDialog,
 	DefaultKeyboardShortcutsDialogContent,
@@ -62,13 +63,17 @@ function PresentationOverlay() {
 	if (!presenting || overview || !rect) return null
 	const vp = editor.getViewportScreenBounds()
 	const style = { opacity: settled ? 1 : 0 }
-	return (
+	// Rendered through a portal into the editor container at z-index 247: above the canvas but
+	// *below* tldraw's watermark (layer 248), which must always stay visible. (The in-front slot
+	// is a stacking context at 250, which would cover it.)
+	return createPortal(
 		<div className="letterbox" style={style}>
 			<div style={{ left: 0, top: 0, width: vp.w, height: Math.max(0, rect.t) }} />
 			<div style={{ left: 0, top: rect.b, width: vp.w, height: Math.max(0, vp.h - rect.b) }} />
 			<div style={{ left: 0, top: rect.t, width: Math.max(0, rect.l), height: rect.b - rect.t }} />
 			<div style={{ left: rect.r, top: rect.t, width: Math.max(0, vp.w - rect.r), height: rect.b - rect.t }} />
-		</div>
+		</div>,
+		editor.getContainer()
 	)
 }
 

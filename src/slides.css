@@ -38,7 +38,7 @@
 }
 
 /* Presentation letterbox: opaque bars around the slide, faded in once the camera settles. */
-.letterbox { position: absolute; inset: 0; pointer-events: none; transition: opacity .15s; z-index: 999; }
+.letterbox { position: absolute; inset: 0; pointer-events: none; transition: opacity .15s; z-index: 247; /* just under tldraw's watermark (248) */ }
 .letterbox > div { position: absolute; background: #000; }
 
 /* Presenter window */
