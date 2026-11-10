@@ -50,10 +50,6 @@ export class SlideShapeUtil extends ShapeUtil<SlideShape> {
 	override hideRotateHandle() {
 		return true
 	}
-	// Keep slides 16:9 when resizing.
-	override isAspectRatioLocked() {
-		return true
-	}
 
 	getDefaultProps(): SlideShape['props'] {
 		return { w: SLIDE_W, h: SLIDE_H, index: 0, notes: '' }
@@ -69,8 +65,15 @@ export class SlideShapeUtil extends ShapeUtil<SlideShape> {
 		return initial
 	}
 
+	// Keep slides 16:9, both when drawing a new slide and when resizing one. (Don't use
+	// isAspectRatioLocked: while drawing, the shape starts 1x1, so it would lock to a square.)
 	override onResize(shape: SlideShape, info: TLResizeInfo<SlideShape>) {
-		return resizeBox(shape, info)
+		const resized = resizeBox(shape, info)
+		const h = (resized.props.w * SLIDE_H) / SLIDE_W
+		const bottom = resized.y + resized.props.h
+		// If the top edge moved, keep the bottom edge anchored.
+		const y = resized.y !== shape.y ? bottom - h : resized.y
+		return { ...resized, y, props: { ...resized.props, h } }
 	}
 
 	override onDoubleClick(shape: SlideShape) {
