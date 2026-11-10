@@ -44,8 +44,10 @@ export class SlideShapeUtil extends ShapeUtil<SlideShape> {
 		notes: T.string,
 	}
 
+	// Arrows can attach to slides, so you can draw connections between slides on the map and they
+	// follow when a slide is moved. (The geometry is unfilled, so only the border/label snaps.)
 	override canBind() {
-		return false
+		return true
 	}
 	override hideRotateHandle() {
 		return true

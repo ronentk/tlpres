@@ -42,6 +42,7 @@ non-localhost requests blocked.
   Canvas position does not matter.
 - `\` (or the **‹ Hide** button) hides the left panel; click the **☰ Slides** tab or press `\` again to bring it back. Remembered per browser.
 - `N` toggles the notes box for the current slide.
+- Arrows snap to slides: draw an arrow (`A`) from one slide's border to another's to show how ideas connect. Arrows follow when slides move.
 - Double-click a slide's edge, or click its row in the panel, to fly to it.
 
 ## Presenting

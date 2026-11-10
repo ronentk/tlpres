@@ -145,6 +145,7 @@ export default function App() {
 				overrides={overrides}
 				hideUi={presenting}
 				onMount={(editor: Editor) => {
+					if (import.meta.env.DEV) (window as any).editor = editor // handy for debugging; dev only
 					const cleanup = installPresentationControls(editor)
 					applyCameraMode(editor)
 					const goToFirst = () => {
