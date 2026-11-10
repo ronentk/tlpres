@@ -39,18 +39,26 @@
 .letterbox { position: absolute; inset: 0; pointer-events: none; transition: opacity .15s; z-index: 999; }
 .letterbox > div { position: absolute; background: #000; }
 
-/* Speaker-notes window */
-.presenter { font: 16px/1.4 system-ui, sans-serif; background: #111; color: #eee; min-height: 100vh; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; box-sizing: border-box; }
+/* Presenter window */
+.presenter { font: 15px/1.4 system-ui, sans-serif; background: #111; color: #eee; height: 100vh; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; box-sizing: border-box; overflow: auto; }
 .presenter-empty { align-items: center; justify-content: center; }
-.presenter header { display: flex; justify-content: space-between; font-variant-numeric: tabular-nums; }
-.presenter-clock { font-size: 28px; font-weight: 600; }
-.presenter-clock span { font-size: 16px; opacity: .6; font-weight: 400; }
+.presenter header { display: flex; justify-content: space-between; align-items: baseline; font-variant-numeric: tabular-nums; }
+.presenter-clock { font-size: 26px; font-weight: 600; }
+.presenter-clock span { font-size: 15px; opacity: .6; font-weight: 400; }
 .presenter-clock.over { color: #ff6b6b; }
-.presenter-count { font-size: 28px; }
-.presenter h1 { font-size: 22px; margin: 0; }
-.presenter h2 { font-size: 14px; margin: 0; opacity: .7; font-weight: 500; }
-.presenter pre { white-space: pre-wrap; font: inherit; margin: 0; }
-.presenter-notes { flex: 1; font-size: 24px !important; line-height: 1.45; }
-.presenter-next { border-top: 1px solid #333; padding-top: 8px; opacity: .8; }
-.presenter footer { display: flex; gap: 8px; }
-.presenter footer button { flex: 1; padding: 10px; font-size: 16px; }
+.presenter-count { font-size: 26px; }
+.presenter h1 { font-size: 20px; margin: 0; }
+.presenter button { font: inherit; padding: 6px 10px; cursor: pointer; background: #262626; color: #eee; border: 1px solid #444; border-radius: 6px; }
+.presenter button:hover { background: #333; }
+.presenter button.on, .presenter-list button.current { background: #2b5cd6; border-color: #2b5cd6; }
+.presenter-controls { display: flex; gap: 6px; flex-wrap: wrap; }
+.presenter-thumbs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; position: relative; }
+.presenter-thumbs figure { margin: 0; min-width: 0; }
+.presenter-thumbs figcaption { font-size: 12px; opacity: .7; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.presenter-thumbs img, .presenter-thumbs .blank { width: 100%; aspect-ratio: 16 / 9; object-fit: contain; background: #fafafa; border-radius: 4px; display: block; }
+.presenter-thumbs .blank { background: #222; }
+.thumb-refresh { position: absolute; right: 0; top: -2px; padding: 0 6px !important; }
+.presenter-notes { flex: 1; min-height: 140px; font: inherit; font-size: 20px; line-height: 1.45; background: #181818; color: #eee; border: 1px solid #333; border-radius: 6px; padding: 8px; resize: none; }
+.presenter-list { display: flex; flex-direction: column; gap: 3px; max-height: 28vh; overflow: auto; }
+.presenter-list button { flex: none; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.presenter-list b { display: inline-block; min-width: 1.6em; opacity: .7; }

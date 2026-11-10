@@ -56,8 +56,11 @@ non-localhost requests blocked.
 | `N` | While presenting: open the speaker-notes window (put it on your laptop screen, not the projector) |
 
 In edit mode the arrows navigate only when nothing is selected (otherwise they nudge the selection).
-The notes window shows notes, next slide, slide counter and the timer, and has its own prev/next.
-Allow pop-ups for the site.
+`N` (or Panel > Notes > "Open notes window") opens a **presenter window**; put it on your laptop
+screen and the deck window on the projector. They sync in the same browser profile (allow pop-ups).
+It has: prev/next, jump-to-slide list, whole-canvas toggle (`Z`), timer start/pause/reset,
+thumbnails of the current and next slide (↻ re-renders them), the slide counter and timer, and
+editable speaker notes (saved to the deck).
 
 Panel > "Timer, camera, files": timer start/pause/reset, target duration (default 40 min),
 and **Fixed camera** (no pan/zoom, no `Z` overview).

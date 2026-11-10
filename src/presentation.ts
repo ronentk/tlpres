@@ -13,9 +13,11 @@ import {
 	PRESENTER_CHANNEL,
 	PresenterCommand,
 	PresenterState,
+	PresenterThumbs,
 	TimerState,
 	elapsedMs,
 } from './presenterProtocol'
+import { blobToDataUrl, renderSlide } from './fileio'
 import type { SlideShape } from './SlideShapeUtil'
 
 export const TRANSITION_MS = 500
@@ -389,12 +391,74 @@ export function installPresentationControls(editor: Editor) {
 	// Presenter window sync.
 	let channel: BroadcastChannel | null = null
 	let latest: PresenterState | null = null
-	if (typeof BroadcastChannel !== 'undefined') {
+	let latestThumbs: PresenterThumbs | null = null
+
+	// Thumbnails of the current and next slide for the presenter window. Rendering is async, so a
+	// token drops results that were superseded by a newer slide change.
+	let thumbToken = 0
+	const sendThumbs = async () => {
+		const token = ++thumbToken
+		const slides = getSlides(editor)
+		const index = slides.findIndex((s) => s.id === $currentSlideId.get())
+		const toUrl = async (slide?: SlideShape) => {
+			const blob = slide && (await renderSlide(editor, slide, 0.3, 0.7))
+			return blob ? blobToDataUrl(blob) : null
+		}
+		try {
+			const [current, next] = await Promise.all([toUrl(slides[index]), toUrl(slides[index + 1])])
+			if (token !== thumbToken) return
+			latestThumbs = { kind: 'thumbs', current, next }
+			channel?.postMessage(latestThumbs)
+		} catch {
+			// a failed thumbnail just leaves the previous one in place
+		}
+	}
+	let thumbTimer: ReturnType<typeof setTimeout> | undefined
+	const scheduleThumbs = (delay: number) => {
+		clearTimeout(thumbTimer)
+		thumbTimer = setTimeout(() => void sendThumbs(), delay)
+	}
+	let lastSlideId: TLShapeId | null = null
+		if (typeof BroadcastChannel !== 'undefined') {
 		channel = new BroadcastChannel(PRESENTER_CHANNEL)
 		channel.onmessage = (ev: MessageEvent<PresenterCommand>) => {
-			if (ev.data.kind === 'next') stepSlide(editor, 1)
-			else if (ev.data.kind === 'prev') stepSlide(editor, -1)
-			else if (ev.data.kind === 'hello' && latest) channel?.postMessage(latest)
+			const cmd = ev.data
+			switch (cmd.kind) {
+				case 'next':
+					return stepSlide(editor, 1)
+				case 'prev':
+					return stepSlide(editor, -1)
+				case 'hello':
+					if (latest) channel?.postMessage(latest)
+					if (latestThumbs) channel?.postMessage(latestThumbs)
+					return
+				case 'goto': {
+					const target = getSlides(editor).find((s) => s.id === cmd.id)
+					return target && moveToSlide(editor, target)
+				}
+				case 'overview':
+					if (!$presenting.get()) {
+						// Not presenting: just show the whole canvas, or return to the current slide.
+						const cur = currentSlide(editor)
+						if ($overview.get() && cur) return moveToSlide(editor, cur)
+						$overview.set(true)
+						return editor.zoomToFit({ force: true, animation: { duration: TRANSITION_MS } })
+					}
+					return toggleOverview(editor)
+				case 'timer':
+					return cmd.action === 'start' ? startTimer() : cmd.action === 'pause' ? pauseTimer() : resetTimer()
+				case 'notes':
+					if (editor.getShape(cmd.id as TLShapeId)) {
+						// Presenting sets the editor read-only, which blocks updates; lift it for this one write.
+						const readonly = editor.getInstanceState().isReadonly
+						if (readonly) editor.updateInstanceState({ isReadonly: false })
+						editor.updateShape({ id: cmd.id as TLShapeId, type: 'slide', props: { notes: cmd.text } })
+						if (readonly) editor.updateInstanceState({ isReadonly: true })
+					}
+					return
+				case 'refreshThumbs':
+					return void sendThumbs()
+			}
 		}
 	}
 	const stopPublish = react('publish presenter state', () => {
@@ -403,8 +467,16 @@ export function installPresentationControls(editor: Editor) {
 		const index = slides.findIndex((s) => s.id === id)
 		const cur = slides[index]
 		const next = slides[index + 1]
+		if (id !== lastSlideId) {
+			lastSlideId = id
+			scheduleThumbs(TRANSITION_MS + 100) // after the camera settles
+		}
 		latest = {
 			kind: 'state',
+			slides: slides.map((s) => ({ id: s.id, title: getSlideTitle(editor, s) || 'Untitled' })),
+			currentId: id,
+			overview: $overview.get(),
+			presenting: $presenting.get(),
 			position: index + 1,
 			total: slides.length,
 			title: cur ? getSlideTitle(editor, cur) : '',
@@ -417,7 +489,15 @@ export function installPresentationControls(editor: Editor) {
 		channel?.postMessage(latest)
 	})
 
+	// Content edits (in edit mode) refresh the thumbnails, debounced.
+	const stopStoreListen = editor.store.listen(() => scheduleThumbs(1500), {
+		source: 'user',
+		scope: 'document',
+	})
+
 	return () => {
+		clearTimeout(thumbTimer)
+		stopStoreListen()
 		stopSideEffect()
 		stopPublish()
 		window.removeEventListener('keydown', onKeyDown, { capture: true })

@@ -1,5 +1,6 @@
 import { Editor, parseTldrawJsonFile, serializeTldrawJsonBlob } from 'tldraw'
 import { $currentSlideId, getSlides, moveToSlide } from './presentation'
+import type { SlideShape } from './SlideShapeUtil'
 
 function download(blob: Blob, filename: string) {
 	const url = URL.createObjectURL(blob)
@@ -53,13 +54,33 @@ export async function loadShippedDeck(editor: Editor): Promise<boolean> {
 	}
 }
 
-function blobToDataUrl(blob: Blob) {
+export function blobToDataUrl(blob: Blob) {
 	return new Promise<string>((resolve, reject) => {
 		const reader = new FileReader()
 		reader.onload = () => resolve(reader.result as string)
 		reader.onerror = () => reject(reader.error)
 		reader.readAsDataURL(blob)
 	})
+}
+
+/** Render a slide's area (everything overlapping its frame, minus slide frames) to a JPEG blob. */
+export async function renderSlide(editor: Editor, slide: SlideShape, pixelRatio: number, quality: number) {
+	const bounds = editor.getShapePageBounds(slide.id)
+	if (!bounds) return null
+	const content = editor
+		.getCurrentPageShapes()
+		.filter((s) => s.type !== 'slide' && editor.getShapePageBounds(s.id)?.collides(bounds))
+	if (!content.length) return null
+	const image = await editor.toImage(content, {
+		format: 'jpeg',
+		quality,
+		bounds,
+		padding: 0,
+		background: true,
+		darkMode: false,
+		pixelRatio,
+	})
+	return image.blob
 }
 
 /** One PDF page per slide, in presentation order. Renders each slide's area via tldraw's image export. */
@@ -73,29 +94,14 @@ export async function exportPdf(editor: Editor, onProgress?: (done: number, tota
 	for (let i = 0; i < slides.length; i++) {
 		const slide = slides[i]
 		const { w, h } = slide.props
-		const bounds = editor.getShapePageBounds(slide.id)!
 		if (!pdf) {
 			pdf = new jsPDF({ unit: 'px', format: [w, h], orientation: w >= h ? 'landscape' : 'portrait', hotfixes: ['px_scaling'] })
 		} else {
 			pdf.addPage([w, h], w >= h ? 'landscape' : 'portrait')
 		}
 
-		// Everything that overlaps the slide, except slide frames themselves.
-		const content = editor
-			.getCurrentPageShapes()
-			.filter((s) => s.type !== 'slide' && editor.getShapePageBounds(s.id)?.collides(bounds))
-		if (content.length) {
-			const image = await editor.toImage(content, {
-				format: 'jpeg',
-				quality: 0.85,
-				bounds,
-				padding: 0,
-				background: true,
-				darkMode: false,
-				pixelRatio: 1.25,
-			})
-			pdf.addImage(await blobToDataUrl(image.blob), 'JPEG', 0, 0, w, h, undefined, 'FAST')
-		}
+		const blob = await renderSlide(editor, slide, 1.25, 0.85)
+		if (blob) pdf.addImage(await blobToDataUrl(blob), 'JPEG', 0, 0, w, h, undefined, 'FAST')
 		onProgress?.(i + 1, slides.length)
 	}
 	pdf!.save(`deck-${stamp()}.pdf`)

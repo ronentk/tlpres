@@ -11,8 +11,17 @@ export interface TimerState {
 	accumulated: number
 }
 
+export interface SlideSummary {
+	id: string
+	title: string
+}
+
 export interface PresenterState {
 	kind: 'state'
+	slides: SlideSummary[]
+	currentId: string | null
+	overview: boolean
+	presenting: boolean
 	/** 1-based position of the current slide, 0 if there is none. */
 	position: number
 	total: number
@@ -24,7 +33,22 @@ export interface PresenterState {
 	targetMinutes: number
 }
 
-export type PresenterCommand = { kind: 'next' } | { kind: 'prev' } | { kind: 'hello' }
+/** Thumbnails (JPEG data URLs) of the current and next slide; sent separately because they're big. */
+export interface PresenterThumbs {
+	kind: 'thumbs'
+	current: string | null
+	next: string | null
+}
+
+export type PresenterCommand =
+	| { kind: 'next' }
+	| { kind: 'prev' }
+	| { kind: 'hello' }
+	| { kind: 'goto'; id: string }
+	| { kind: 'overview' }
+	| { kind: 'timer'; action: 'start' | 'pause' | 'reset' }
+	| { kind: 'notes'; id: string; text: string }
+	| { kind: 'refreshThumbs' }
 
 export function elapsedMs(timer: TimerState, now = Date.now()) {
 	return timer.accumulated + (timer.running ? now - timer.startedAt : 0)
