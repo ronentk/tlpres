@@ -40,6 +40,7 @@ non-localhost requests blocked.
 - Put text, images, arrows etc. on top of a slide. Anything inside a slide's frame belongs to it.
 - Order is explicit: **drag rows in the left panel** to reorder (stored in each slide's `index`).
   Canvas position does not matter.
+- `\` (or the **‹ Hide** button) hides the left panel; click the **☰ Slides** tab or press `\` again to bring it back. Remembered per browser.
 - `N` toggles the notes box for the current slide.
 - Double-click a slide's edge, or click its row in the panel, to fly to it.
 

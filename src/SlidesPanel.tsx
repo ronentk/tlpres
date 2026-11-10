@@ -4,6 +4,7 @@ import { elapsedMs, formatClock } from './presenterProtocol'
 import {
 	$fixedCamera,
 	$notesOpen,
+	$panelHidden,
 	$presenting,
 	$targetMinutes,
 	$timer,
@@ -15,6 +16,7 @@ import {
 	reorderSlides,
 	resetTimer,
 	setFixedCamera,
+	setPanelHidden,
 	setTargetMinutes,
 	startTimer,
 	useCurrentSlide,
@@ -30,6 +32,7 @@ export const SlidesPanel = track(() => {
 	const slides = useSlides()
 	const current = useCurrentSlide()
 	const presenting = useValue($presenting)
+	const hidden = useValue($panelHidden)
 	const notesOpen = useValue($notesOpen)
 	const fixed = useValue($fixedCamera)
 	const target = useValue($targetMinutes)
@@ -75,6 +78,18 @@ export const SlidesPanel = track(() => {
 	}, [presenting])
 
 	if (presenting) return null
+	if (hidden) {
+		return (
+			<button
+				className="slides-panel-tab"
+				title="Show slide panel (\\)"
+				onPointerDown={editor.markEventAsHandled}
+				onClick={() => setPanelHidden(false)}
+			>
+				☰ Slides
+			</button>
+		)
+	}
 
 	const position = current ? slides.findIndex((s) => s.id === current.id) + 1 : 0
 	const elapsed = elapsedMs(timer, now)
@@ -103,6 +118,9 @@ export const SlidesPanel = track(() => {
 	return (
 		<div className="slides-panel" onPointerDown={editor.markEventAsHandled}>
 			<div className="slides-status">
+				<button className="slides-hide" title="Hide panel (\\)" onClick={() => setPanelHidden(true)}>
+					‹ Hide
+				</button>
 				<span>{slides.length ? `${position || '–'} / ${slides.length}` : 'No slides'}</span>
 				<span className={elapsed > target * 60_000 ? 'over' : ''}>
 					{formatClock(elapsed)} / {target}m

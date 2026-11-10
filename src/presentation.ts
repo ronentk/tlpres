@@ -52,6 +52,13 @@ export const $overview = atom('overview', false)
 /** True once the camera has finished moving to the current slide (used to fade in the letterbox). */
 export const $settled = atom('settled', true)
 export const $currentSlideId = atom<TLShapeId | null>('current slide id', null)
+/** Left slide-list panel hidden in edit mode (remembered per browser). */
+export const $panelHidden = atom('panel hidden', loadSetting('panelHidden', false))
+export function setPanelHidden(hidden: boolean) {
+	$panelHidden.set(hidden)
+	saveSetting('panelHidden', hidden)
+}
+
 export const $notesOpen = atom('notes open', false)
 export const $fixedCamera = atom('fixed camera', loadSetting('fixedCamera', false))
 export const $targetMinutes = atom('target minutes', loadSetting('targetMinutes', 40))
@@ -333,6 +340,11 @@ export function installPresentationControls(editor: Editor) {
 				if (presenting) {
 					if (!e.repeat) toggleOverview(editor)
 				} else handled = false // outside presentation, leave tldraw's own Z/Shift+Z alone
+				break
+			case '\\':
+				if (!e.repeat && !presenting) setPanelHidden(!$panelHidden.get())
+				else if (!presenting) break
+				else handled = false
 				break
 			case 'n':
 			case 'N':
