@@ -1,0 +1,85 @@
+import { Editor, parseTldrawJsonFile, serializeTldrawJsonBlob } from 'tldraw'
+import { $currentSlideId, getSlides, moveToSlide } from './presentation'
+
+function download(blob: Blob, filename: string) {
+	const url = URL.createObjectURL(blob)
+	const a = document.createElement('a')
+	a.href = url
+	a.download = filename
+	document.body.appendChild(a)
+	a.click()
+	a.remove()
+	setTimeout(() => URL.revokeObjectURL(url), 10_000)
+}
+
+function stamp() {
+	return new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')
+}
+
+/** Save the whole document (all shapes, images, slide order and notes) as a .tldr backup. */
+export async function exportDeck(editor: Editor) {
+	const blob = await serializeTldrawJsonBlob(editor)
+	download(blob, `deck-${stamp()}.tldr`)
+}
+
+/** Replace the current document with the contents of a .tldr file. */
+export async function importDeck(editor: Editor, file: File) {
+	const json = await file.text()
+	const result = parseTldrawJsonFile({ json, schema: editor.store.schema })
+	if (!result.ok) {
+		throw new Error(`Could not read that file (${result.error.type}).`)
+	}
+	editor.loadSnapshot(result.value.getStoreSnapshot())
+	$currentSlideId.set(null)
+	const first = getSlides(editor)[0]
+	if (first) moveToSlide(editor, first, { animate: false })
+	else editor.zoomToFit({ animation: { duration: 0 } })
+}
+
+function blobToDataUrl(blob: Blob) {
+	return new Promise<string>((resolve, reject) => {
+		const reader = new FileReader()
+		reader.onload = () => resolve(reader.result as string)
+		reader.onerror = () => reject(reader.error)
+		reader.readAsDataURL(blob)
+	})
+}
+
+/** One PDF page per slide, in presentation order. Renders each slide's area via tldraw's image export. */
+export async function exportPdf(editor: Editor, onProgress?: (done: number, total: number) => void) {
+	const slides = getSlides(editor)
+	if (!slides.length) throw new Error('There are no slides to export.')
+	// Loaded on demand so it doesn't weigh down the main bundle.
+	const { jsPDF } = await import('jspdf')
+	let pdf: InstanceType<typeof jsPDF> | null = null
+
+	for (let i = 0; i < slides.length; i++) {
+		const slide = slides[i]
+		const { w, h } = slide.props
+		const bounds = editor.getShapePageBounds(slide.id)!
+		if (!pdf) {
+			pdf = new jsPDF({ unit: 'px', format: [w, h], orientation: w >= h ? 'landscape' : 'portrait', hotfixes: ['px_scaling'] })
+		} else {
+			pdf.addPage([w, h], w >= h ? 'landscape' : 'portrait')
+		}
+
+		// Everything that overlaps the slide, except slide frames themselves.
+		const content = editor
+			.getCurrentPageShapes()
+			.filter((s) => s.type !== 'slide' && editor.getShapePageBounds(s.id)?.collides(bounds))
+		if (content.length) {
+			const image = await editor.toImage(content, {
+				format: 'jpeg',
+				quality: 0.85,
+				bounds,
+				padding: 0,
+				background: true,
+				darkMode: false,
+				pixelRatio: 1.25,
+			})
+			pdf.addImage(await blobToDataUrl(image.blob), 'JPEG', 0, 0, w, h, undefined, 'FAST')
+		}
+		onProgress?.(i + 1, slides.length)
+	}
+	pdf!.save(`deck-${stamp()}.pdf`)
+}

@@ -1,0 +1,56 @@
+.tldraw__editor { position: fixed; inset: 0; }
+
+.slides-panel {
+	display: flex; flex-direction: column; gap: 6px;
+	width: 240px; max-height: calc(100% - 110px); margin: 50px 0;
+	padding: 6px; overflow: auto; pointer-events: all;
+	background: var(--tl-color-low);
+	border: 2px solid var(--tl-color-background); border-left: 0;
+	border-radius: 0 var(--tl-radius-4) var(--tl-radius-4) 0;
+	font-size: 12px; color: var(--tl-color-text);
+}
+.slides-status { display: flex; justify-content: space-between; opacity: .7; padding: 0 4px; font-variant-numeric: tabular-nums; }
+.slides-status .over { color: #d33; opacity: 1; }
+.slides-list { display: flex; flex-direction: column; gap: 2px; overflow: auto; max-height: 40vh; }
+.slides-panel-button { border-radius: var(--tl-radius-4); outline-offset: -1px; padding: 8px; }
+.slides-panel-button.drop-target { box-shadow: 0 -2px 0 var(--tl-color-selection-stroke); }
+.slides-row { display: flex; gap: 8px; cursor: grab; align-items: center; user-select: none; }
+.slides-row:hover { background: var(--tl-color-muted-2) !important; }
+.slides-row b { min-width: 1.5em; text-align: right; opacity: .6; }
+.slides-row-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+.slides-actions { display: flex; gap: 4px; flex-wrap: wrap; }
+.slides-panel button:not(.tlui-button), .slides-panel input[type=number] { font: inherit; }
+.slides-actions button { flex: 1; padding: 4px 6px; cursor: pointer; }
+.slides-notes { display: flex; flex-direction: column; gap: 4px; }
+.slides-notes textarea { min-height: 140px; resize: vertical; font: inherit; padding: 4px; }
+.slides-settings { display: flex; flex-direction: column; gap: 6px; }
+.slides-settings > * + * { margin-top: 6px; }
+.slides-settings summary { cursor: pointer; opacity: .7; }
+.slides-settings label { display: block; }
+.slides-settings input[type=number] { width: 4em; }
+
+.slide-shape-label {
+	pointer-events: all; position: absolute; background: var(--tl-color-low);
+	padding: calc(12px * var(--tl-scale)); border-bottom-right-radius: calc(var(--tl-radius-4) * var(--tl-scale));
+	font-size: calc(12px * var(--tl-scale)); color: var(--tl-color-text); white-space: nowrap;
+}
+
+/* Presentation letterbox: opaque bars around the slide, faded in once the camera settles. */
+.letterbox { position: absolute; inset: 0; pointer-events: none; transition: opacity .15s; z-index: 999; }
+.letterbox > div { position: absolute; background: #000; }
+
+/* Speaker-notes window */
+.presenter { font: 16px/1.4 system-ui, sans-serif; background: #111; color: #eee; min-height: 100vh; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; box-sizing: border-box; }
+.presenter-empty { align-items: center; justify-content: center; }
+.presenter header { display: flex; justify-content: space-between; font-variant-numeric: tabular-nums; }
+.presenter-clock { font-size: 28px; font-weight: 600; }
+.presenter-clock span { font-size: 16px; opacity: .6; font-weight: 400; }
+.presenter-clock.over { color: #ff6b6b; }
+.presenter-count { font-size: 28px; }
+.presenter h1 { font-size: 22px; margin: 0; }
+.presenter h2 { font-size: 14px; margin: 0; opacity: .7; font-weight: 500; }
+.presenter pre { white-space: pre-wrap; font: inherit; margin: 0; }
+.presenter-notes { flex: 1; font-size: 24px !important; line-height: 1.45; }
+.presenter-next { border-top: 1px solid #333; padding-top: 8px; opacity: .8; }
+.presenter footer { display: flex; gap: 8px; }
+.presenter footer button { flex: 1; padding: 10px; font-size: 16px; }
