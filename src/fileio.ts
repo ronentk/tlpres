@@ -36,6 +36,23 @@ export async function importDeck(editor: Editor, file: File) {
 	else editor.zoomToFit({ animation: { duration: 0 } })
 }
 
+/**
+ * If the browser has no saved deck yet, try the deck shipped with the site (`public/deck.tldr`).
+ * Returns false when there is no such file (or it can't be parsed), so the caller can fall back.
+ */
+export async function loadShippedDeck(editor: Editor): Promise<boolean> {
+	try {
+		const res = await fetch(`${import.meta.env.BASE_URL}deck.tldr`, { cache: 'no-cache' })
+		if (!res.ok) return false
+		const result = parseTldrawJsonFile({ json: await res.text(), schema: editor.store.schema })
+		if (!result.ok) return false // e.g. the dev server answers a missing file with index.html
+		editor.loadSnapshot(result.value.getStoreSnapshot())
+		return getSlides(editor).length > 0
+	} catch {
+		return false
+	}
+}
+
 function blobToDataUrl(blob: Blob) {
 	return new Promise<string>((resolve, reject) => {
 		const reader = new FileReader()

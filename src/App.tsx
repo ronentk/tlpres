@@ -30,6 +30,7 @@ import {
 	moveToSlide,
 	stepSlide,
 } from './presentation'
+import { loadShippedDeck } from './fileio'
 import { createStarterDeck } from './starterDeck'
 import './slides.css'
 
@@ -141,9 +142,19 @@ export default function App() {
 				onMount={(editor: Editor) => {
 					const cleanup = installPresentationControls(editor)
 					applyCameraMode(editor)
-					if (getSlides(editor).length === 0) createStarterDeck(editor)
-					const first = getSlides(editor)[0]
-					if (first) moveToSlide(editor, first, { animate: false })
+					const goToFirst = () => {
+						const first = getSlides(editor)[0]
+						if (first) moveToSlide(editor, first, { animate: false })
+					}
+					if (getSlides(editor).length > 0) {
+						goToFirst() // saved in this browser: keep it
+					} else {
+						// Empty browser: use the deck shipped in public/deck.tldr, else the starter deck.
+						loadShippedDeck(editor).then((ok) => {
+							if (!ok && getSlides(editor).length === 0) createStarterDeck(editor)
+							goToFirst()
+						})
+					}
 					return cleanup
 				}}
 			/>

@@ -72,6 +72,22 @@ Panel > "Timer, camera, files":
 
 The browser also autosaves to local storage (`persistenceKey="tlpres-deck"`), but treat that as fragile.
 
+## Deploying to a stable URL
+
+`npm run build` produces a static site in `dist/` (Cloudflare Pages, Netlify, Vercel, GitHub Pages...).
+Set `VITE_TLDRAW_LICENSE_KEY` in the host's build environment, and make sure the domain is allowed
+for your tldraw key. On a subpath host (GitHub Pages), set `base` in `vite.config.ts`.
+
+Edits live in each browser's storage, not at the URL. To publish a deck so any fresh browser
+shows it:
+
+1. Edit locally, then **Export .tldr**.
+2. Save the file as `public/deck.tldr`, commit, redeploy.
+
+On load, a browser with no saved deck fetches `deck.tldr` (falling back to the starter deck if
+absent). A browser that already has a saved deck keeps its own copy, so to pick up a new
+published deck there, use **Import…** with the file (or clear that site's data).
+
 ## Files
 
 `src/App.tsx` (Tldraw setup, license, assets) · `SlideShapeUtil.tsx` / `SlideShapeTool.ts` (slide shape and tool)
