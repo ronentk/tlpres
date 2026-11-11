@@ -20,6 +20,8 @@ export interface PresenterState {
 	kind: 'state'
 	slides: SlideSummary[]
 	currentId: string | null
+	/** 0-based position in the sequence (the same slide can appear at several positions). */
+	currentPos: number
 	overview: boolean
 	presenting: boolean
 	/** 1-based position of the current slide, 0 if there is none. */
@@ -44,7 +46,7 @@ export type PresenterCommand =
 	| { kind: 'next' }
 	| { kind: 'prev' }
 	| { kind: 'hello' }
-	| { kind: 'goto'; id: string }
+	| { kind: 'goto'; pos: number }
 	| { kind: 'overview' }
 	| { kind: 'timer'; action: 'start' | 'pause' | 'reset' }
 	| { kind: 'notes'; id: string; text: string }

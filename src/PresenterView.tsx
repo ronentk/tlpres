@@ -52,8 +52,8 @@ export function PresenterView() {
 	useEffect(() => {
 		if (!state) return
 		const typing = document.activeElement === notesEl.current
-		if (notesFor.current !== state.currentId || !typing) {
-			notesFor.current = state.currentId
+		if (notesFor.current !== `${state.currentId}@${state.currentPos}` || !typing) {
+			notesFor.current = `${state.currentId}@${state.currentPos}`
 			setNotes(state.notes)
 		}
 	}, [state])
@@ -117,9 +117,9 @@ export function PresenterView() {
 			<nav className="presenter-list">
 				{state.slides.map((s, i) => (
 					<button
-						key={s.id}
-						className={s.id === state.currentId ? 'current' : ''}
-						onClick={() => send({ kind: 'goto', id: s.id })}
+						key={`${i}-${s.id}`}
+						className={i === state.currentPos ? 'current' : ''}
+						onClick={() => send({ kind: 'goto', pos: i })}
 					>
 						<b>{i + 1}</b> {s.title}
 					</button>

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { TLShapeId, track, useEditor, useValue } from 'tldraw'
+import { track, useEditor, useValue } from 'tldraw'
 import { elapsedMs, formatClock } from './presenterProtocol'
 import {
+	$currentPos,
 	$fixedCamera,
 	$notesOpen,
 	$panelHidden,
@@ -10,18 +11,21 @@ import {
 	$timer,
 	enterPresentation,
 	getSlideTitle,
-	moveToSlide,
+	addSequenceVisit,
+	moveToPosition,
+	moveSequenceEntry,
+	removeSequenceEntry,
 	openPresenterWindow,
 	pauseTimer,
-	reorderSlides,
 	resetTimer,
 	setFixedCamera,
 	setPanelHidden,
 	setTargetMinutes,
 	startTimer,
+	useCurrentPos,
 	useCurrentSlide,
 	useNow,
-	useSlides,
+	useSequence,
 } from './presentation'
 import { exportDeck, exportPdf, importDeck } from './fileio'
 
@@ -29,8 +33,9 @@ import { exportDeck, exportPdf, importDeck } from './fileio'
 // timer, camera mode and file actions. Hidden entirely in presentation mode.
 export const SlidesPanel = track(() => {
 	const editor = useEditor()
-	const slides = useSlides()
+	const sequence = useSequence()
 	const current = useCurrentSlide()
+	const currentPos = useCurrentPos()
 	const presenting = useValue($presenting)
 	const hidden = useValue($panelHidden)
 	const notesOpen = useValue($notesOpen)
@@ -39,35 +44,36 @@ export const SlidesPanel = track(() => {
 	const timer = useValue($timer)
 	const now = useNow()
 	const selected = useValue('selected ids', () => editor.getSelectedShapeIds(), [editor])
-	const [dragId, setDragId] = useState<TLShapeId | null>(null)
-	const [overId, setOverId] = useState<TLShapeId | null>(null)
+	// Rows are positions in the talk (not slides): the same slide can appear more than once.
+	const [dragPos, setDragPos] = useState<number | null>(null)
+	const [overPos, setOverPos] = useState<number | null>(null)
 	const [busy, setBusy] = useState('')
 	const fileInput = useRef<HTMLInputElement>(null)
 	const listRef = useRef<HTMLDivElement>(null)
 
 	// Drag-over/drop use native *capture* listeners: tldraw's container stops `drop` events from
 	// bubbling to React, so React's onDrop never fires for elements inside the editor.
-	const dropRef = useRef<(id: TLShapeId) => void>(() => {})
+	const dropRef = useRef<(pos: number) => void>(() => {})
 	useEffect(() => {
 		const list = listRef.current
 		if (!list) return
-		const idOf = (e: Event) =>
-			((e.target as HTMLElement).closest('[data-slide-id]') as HTMLElement | null)?.dataset.slideId as
-				| TLShapeId
-				| undefined
+		const posOf = (e: Event) => {
+			const row = (e.target as HTMLElement).closest('[data-pos]') as HTMLElement | null
+			return row ? Number(row.dataset.pos) : undefined
+		}
 		const over = (e: DragEvent) => {
-			const id = idOf(e)
-			if (!id) return
+			const pos = posOf(e)
+			if (pos === undefined) return
 			e.preventDefault()
-			setOverId(id)
+			setOverPos(pos)
 		}
 		const drop = (e: DragEvent) => {
-			const id = idOf(e)
-			if (!id) return
+			const pos = posOf(e)
+			if (pos === undefined) return
 			e.preventDefault()
 			e.stopPropagation()
-			dropRef.current(id)
-			setOverId(null)
+			dropRef.current(pos)
+			setOverPos(null)
 		}
 		list.addEventListener('dragover', over, true)
 		list.addEventListener('drop', drop, true)
@@ -82,7 +88,7 @@ export const SlidesPanel = track(() => {
 		return (
 			<button
 				className="slides-panel-tab"
-				title="Show slide panel (\\)"
+				title="Show slide panel (\)"
 				onPointerDown={editor.markEventAsHandled}
 				onClick={() => setPanelHidden(false)}
 			>
@@ -91,15 +97,16 @@ export const SlidesPanel = track(() => {
 		)
 	}
 
-	const position = current ? slides.findIndex((s) => s.id === current.id) + 1 : 0
+	const position = current && currentPos >= 0 ? currentPos + 1 : 0
 	const elapsed = elapsedMs(timer, now)
-	const notesSlide = current ?? slides[0]
+	const notesSlide = current ?? sequence[0]
 
-	const onDrop = (targetId: TLShapeId) => {
-		if (!dragId || dragId === targetId) return
-		const ids = slides.map((s) => s.id).filter((id) => id !== dragId)
-		ids.splice(ids.indexOf(targetId), 0, dragId)
-		reorderSlides(editor, ids)
+	// The dragged entry takes the dropped-on row's position (so dragging down lands below it).
+	const onDrop = (targetPos: number) => {
+		if (dragPos === null) return
+		moveSequenceEntry(editor, dragPos, targetPos)
+		// Keep following the entry we were on if it was the one moved.
+		if (currentPos === dragPos) $currentPos.set(targetPos)
 	}
 
 	dropRef.current = onDrop
@@ -118,44 +125,75 @@ export const SlidesPanel = track(() => {
 	return (
 		<div className="slides-panel" onPointerDown={editor.markEventAsHandled}>
 			<div className="slides-status">
-				<button className="slides-hide" title="Hide panel (\\)" onClick={() => setPanelHidden(true)}>
+				<button className="slides-hide" title="Hide panel (\)" onClick={() => setPanelHidden(true)}>
 					‹ Hide
 				</button>
-				<span>{slides.length ? `${position || '–'} / ${slides.length}` : 'No slides'}</span>
+				<span>{sequence.length ? `${position || '–'} / ${sequence.length}` : 'No slides'}</span>
 				<span className={elapsed > target * 60_000 ? 'over' : ''}>
 					{formatClock(elapsed)} / {target}m
 				</span>
 			</div>
 
 			<div className="slides-list scroll-light" ref={listRef}>
-				{slides.map((slide, i) => (
-					// A draggable <div> (not a <button>: drag inside buttons is unreliable across browsers).
-					<div
-						key={slide.id}
-						role="button"
-						tabIndex={0}
-						draggable
-						data-slide-id={slide.id}
-						className={'slides-panel-button slides-row' + (overId === slide.id ? ' drop-target' : '')}
-						onClick={() => moveToSlide(editor, slide)}
-						onDragStart={() => setDragId(slide.id)}
-						onDragEnd={() => {
-							setDragId(null)
-							setOverId(null)
-						}}
-						style={{
-							background: current?.id === slide.id ? 'var(--tl-color-background)' : 'transparent',
-							outline: selected.includes(slide.id) ? 'var(--tl-color-selection-stroke) solid 1.5px' : 'none',
-						}}
-					>
-						<b>{i + 1}</b>
-						<span className="slides-row-title">{getSlideTitle(editor, slide) || 'Untitled'}</span>
-					</div>
-				))}
+				{sequence.map((slide, i) => {
+					const visits = sequence.filter((s) => s.id === slide.id).length
+					const isRepeat = sequence.findIndex((s) => s.id === slide.id) !== i
+					return (
+						// A draggable <div> (not a <button>: drag inside buttons is unreliable across browsers).
+						<div
+							key={`${i}-${slide.id}`}
+							role="button"
+							tabIndex={0}
+							draggable
+							data-pos={i}
+							className={'slides-panel-button slides-row' + (overPos === i ? ' drop-target' : '')}
+							onClick={() => moveToPosition(editor, i)}
+							onDragStart={() => setDragPos(i)}
+							onDragEnd={() => {
+								setDragPos(null)
+								setOverPos(null)
+							}}
+							style={{
+								background: currentPos === i ? 'var(--tl-color-background)' : 'transparent',
+								outline: selected.includes(slide.id)
+									? 'var(--tl-color-selection-stroke) solid 1.5px'
+									: 'none',
+							}}
+						>
+							<b>{i + 1}</b>
+							<span className="slides-row-title">
+								{isRepeat && <span title="Return visit">↺ </span>}
+								{getSlideTitle(editor, slide) || 'Untitled'}
+							</span>
+							{visits > 1 && isRepeat && (
+								<button
+									className="slides-row-btn"
+									title="Remove this visit"
+									onClick={(e) => {
+										e.stopPropagation()
+										removeSequenceEntry(editor, i)
+									}}
+								>
+									×
+								</button>
+							)}
+							<button
+								className="slides-row-btn"
+								title="Add another visit to this slide at the end (then drag it into place)"
+								onClick={(e) => {
+									e.stopPropagation()
+									addSequenceVisit(editor, slide.id)
+								}}
+							>
+								↺+
+							</button>
+						</div>
+					)
+				})}
 			</div>
 
 			<div className="slides-actions">
-				<button onClick={() => enterPresentation(editor)} disabled={!slides.length}>
+				<button onClick={() => enterPresentation(editor)} disabled={!sequence.length}>
 					Present (P)
 				</button>
 				<button onClick={() => $notesOpen.set(!notesOpen)}>Notes (N)</button>

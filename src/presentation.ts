@@ -52,6 +52,8 @@ export const $overview = atom('overview', false)
 /** True once the camera has finished moving to the current slide (used to fade in the letterbox). */
 export const $settled = atom('settled', true)
 export const $currentSlideId = atom<TLShapeId | null>('current slide id', null)
+/** Position in the talk sequence (the same slide can appear at several positions). -1 = none yet. */
+export const $currentPos = atom('current position', -1)
 /** Left slide-list panel hidden in edit mode (remembered per browser). */
 export const $panelHidden = atom('panel hidden', loadSetting('panelHidden', false))
 export function setPanelHidden(hidden: boolean) {
@@ -111,19 +113,58 @@ export function useNow(intervalMs = 1000) {
 }
 
 // ---------------------------------------------------------------------------
-// Slide order. Order is explicit: `props.index` (1-based). Ties fall back to canvas x, then id,
-// so duplicated/pasted slides stay deterministic until the next reorder renumbers them.
+// Slide order. Two layers:
+//  - `props.index` gives every slide a base order (new slides get the next number).
+//  - The *sequence* (saved in the page's `meta.sequence`, so it travels with the .tldr file) is
+//    the order of the talk. It can list a slide more than once, to return to it later.
+// Slides missing from the saved sequence (new slides, or old decks) are appended in index order.
 // ---------------------------------------------------------------------------
 
-export function getSlides(editor: Editor): SlideShape[] {
+function slidesByIndex(editor: Editor): SlideShape[] {
 	return (editor.getCurrentPageShapes().filter((s) => s.type === 'slide') as SlideShape[]).sort(
 		(a, b) => a.props.index - b.props.index || a.x - b.x || (a.id < b.id ? -1 : 1)
 	)
 }
 
+/** The talk, in order, with repeats. */
+export function getSequence(editor: Editor): SlideShape[] {
+	const bySlide = new Map(slidesByIndex(editor).map((s) => [s.id as string, s]))
+	const saved = editor.getCurrentPage().meta.sequence
+	const seq: SlideShape[] = []
+	if (Array.isArray(saved)) {
+		for (const id of saved) {
+			const slide = typeof id === 'string' ? bySlide.get(id) : undefined
+			if (slide) seq.push(slide)
+		}
+	}
+	const present = new Set(seq.map((s) => s.id))
+	for (const slide of bySlide.values()) if (!present.has(slide.id)) seq.push(slide)
+	return seq
+}
+
+/** Each slide once, ordered by its first appearance in the sequence. */
+export function getSlides(editor: Editor): SlideShape[] {
+	const seen = new Set<string>()
+	return getSequence(editor).filter((s) => !seen.has(s.id) && !!seen.add(s.id))
+}
+
+export function setSequence(editor: Editor, ids: string[]) {
+	const page = editor.getCurrentPage()
+	editor.updatePage({ id: page.id, meta: { ...page.meta, sequence: ids } })
+}
+
+export function useSequence() {
+	const editor = useEditor()
+	return useValue<SlideShape[]>('slide sequence', () => getSequence(editor), [editor])
+}
+
 export function useSlides() {
 	const editor = useEditor()
 	return useValue<SlideShape[]>('slide shapes', () => getSlides(editor), [editor])
+}
+
+export function useCurrentPos() {
+	return useValue($currentPos)
 }
 
 export function useCurrentSlide() {
@@ -138,13 +179,39 @@ export function useCurrentSlide() {
 	)
 }
 
-export function nextSlideIndex(editor: Editor) {
-	return getSlides(editor).reduce((max, s) => Math.max(max, s.props.index), 0) + 1
+/** The current position, repaired if the sequence changed under it (reorder, deletion). */
+export function resolveCurrentPos(editor: Editor): number {
+	const seq = getSequence(editor)
+	const pos = $currentPos.get()
+	const id = $currentSlideId.get()
+	if (pos >= 0 && seq[pos]?.id === id) return pos
+	return id ? seq.findIndex((s) => s.id === id) : -1
 }
 
-/** Renumber slides 1..n in the given order. */
-export function reorderSlides(editor: Editor, orderedIds: TLShapeId[]) {
-	editor.updateShapes(orderedIds.map((id, i) => ({ id, type: 'slide' as const, props: { index: i + 1 } })))
+export function nextSlideIndex(editor: Editor) {
+	return slidesByIndex(editor).reduce((max, s) => Math.max(max, s.props.index), 0) + 1
+}
+
+/** Move the entry at `from` so it ends up at position `to`. */
+export function moveSequenceEntry(editor: Editor, from: number, to: number) {
+	const ids = getSequence(editor).map((s) => s.id as string)
+	if (from === to || from < 0 || from >= ids.length || to < 0 || to >= ids.length) return
+	const [moved] = ids.splice(from, 1)
+	ids.splice(to, 0, moved)
+	setSequence(editor, ids)
+}
+
+/** Add another visit to a slide at the end of the talk (drag it where you want it). */
+export function addSequenceVisit(editor: Editor, slideId: string) {
+	setSequence(editor, [...getSequence(editor).map((s) => s.id as string), slideId])
+}
+
+/** Remove one visit. The last visit of a slide can't be removed. */
+export function removeSequenceEntry(editor: Editor, pos: number) {
+	const ids = getSequence(editor).map((s) => s.id as string)
+	if (ids.indexOf(ids[pos]) === ids.lastIndexOf(ids[pos])) return
+	ids.splice(pos, 1)
+	setSequence(editor, ids)
 }
 
 /** A readable label: the first line of the top-left-most text on the slide. */
@@ -172,10 +239,27 @@ export function getSlideTitle(editor: Editor, slide: SlideShape): string {
 
 let settleToken = 0
 
-export function moveToSlide(editor: Editor, slide: SlideShape, opts: { animate?: boolean } = {}) {
+/**
+ * Fly the camera to a slide. `pos` says which visit of the slide this is; by default we stay on the
+ * current position if it is this slide, otherwise use its first visit.
+ */
+export function moveToSlide(
+	editor: Editor,
+	slide: SlideShape,
+	opts: { animate?: boolean; pos?: number } = {}
+) {
 	const bounds = editor.getShapePageBounds(slide.id)
 	if (!bounds) return
 	const animate = opts.animate ?? true
+	const seq = getSequence(editor)
+	const current = $currentPos.get()
+	$currentPos.set(
+		opts.pos !== undefined
+			? opts.pos
+			: seq[current]?.id === slide.id
+				? current
+				: seq.findIndex((s) => s.id === slide.id)
+	)
 	$currentSlideId.set(slide.id)
 	$overview.set(false)
 	$settled.set(false)
@@ -192,25 +276,29 @@ export function moveToSlide(editor: Editor, slide: SlideShape, opts: { animate?:
 	}, animate ? TRANSITION_MS + 60 : 0)
 }
 
+export function moveToPosition(editor: Editor, pos: number, opts: { animate?: boolean } = {}) {
+	const slide = getSequence(editor)[pos]
+	if (slide) moveToSlide(editor, slide, { ...opts, pos })
+}
+
 function currentSlide(editor: Editor): SlideShape | null {
 	const id = $currentSlideId.get()
 	return (id && (editor.getShape(id) as SlideShape | undefined)) || null
 }
 
-/** Move one step through the explicit slide order (dir = +1 / -1). */
+/** Move one step through the talk sequence (dir = +1 / -1). */
 export function stepSlide(editor: Editor, dir: 1 | -1) {
-	const slides = getSlides(editor)
-	if (!slides.length) return
-	const cur = currentSlide(editor)
-	const index = cur ? slides.findIndex((s) => s.id === cur.id) : -1
-	const target = index < 0 ? slides[0] : slides[Math.min(slides.length - 1, Math.max(0, index + dir))]
+	const seq = getSequence(editor)
+	if (!seq.length) return
+	const pos = resolveCurrentPos(editor)
+	const target = pos < 0 ? 0 : Math.min(seq.length - 1, Math.max(0, pos + dir))
 	// Also re-fits when we are already on the first/last slide or coming back from the overview.
-	moveToSlide(editor, target)
+	moveToPosition(editor, target)
 }
 
 export function goToSlideAt(editor: Editor, which: 'first' | 'last') {
-	const slides = getSlides(editor)
-	if (slides.length) moveToSlide(editor, which === 'first' ? slides[0] : slides[slides.length - 1])
+	const seq = getSequence(editor)
+	if (seq.length) moveToPosition(editor, which === 'first' ? 0 : seq.length - 1)
 }
 
 // ---------------------------------------------------------------------------
@@ -227,19 +315,15 @@ export function enterPresentation(editor: Editor) {
 	applyCameraMode(editor)
 	if (elapsedMs($timer.get()) === 0) startTimer()
 
-	let start = currentSlide(editor)
-	if (!start) {
-		// No current slide yet: pick the one closest to what the camera is looking at.
-		const c = editor.getViewportPageBounds().center
-		start = slides.reduce((best, s) => {
-			const d = (p: SlideShape) => {
-				const sc = editor.getShapePageBounds(p.id)!.center
-				return (sc.x - c.x) ** 2 + (sc.y - c.y) ** 2
-			}
-			return d(s) < d(best) ? s : best
-		})
+	const pos = resolveCurrentPos(editor)
+	if (pos >= 0) return moveToPosition(editor, pos)
+	// No current slide yet: pick the one closest to what the camera is looking at.
+	const c = editor.getViewportPageBounds().center
+	const dist = (p: SlideShape) => {
+		const sc = editor.getShapePageBounds(p.id)!.center
+		return (sc.x - c.x) ** 2 + (sc.y - c.y) ** 2
 	}
-	moveToSlide(editor, start)
+	moveToSlide(editor, slides.reduce((best, s) => (dist(s) < dist(best) ? s : best)))
 }
 
 export function exitPresentation(editor: Editor) {
@@ -410,8 +494,8 @@ export function installPresentationControls(editor: Editor) {
 	let thumbToken = 0
 	const sendThumbs = async () => {
 		const token = ++thumbToken
-		const slides = getSlides(editor)
-		const index = slides.findIndex((s) => s.id === $currentSlideId.get())
+		const slides = getSequence(editor)
+		const index = resolveCurrentPos(editor)
 		const toUrl = async (slide?: SlideShape) => {
 			const blob = slide && (await renderSlide(editor, slide, 0.3, 0.7))
 			return blob ? blobToDataUrl(blob) : null
@@ -430,7 +514,7 @@ export function installPresentationControls(editor: Editor) {
 		clearTimeout(thumbTimer)
 		thumbTimer = setTimeout(() => void sendThumbs(), delay)
 	}
-	let lastSlideId: TLShapeId | null = null
+	let lastPos = -2
 		if (typeof BroadcastChannel !== 'undefined') {
 		channel = new BroadcastChannel(PRESENTER_CHANNEL)
 		channel.onmessage = (ev: MessageEvent<PresenterCommand>) => {
@@ -444,10 +528,8 @@ export function installPresentationControls(editor: Editor) {
 					if (latest) channel?.postMessage(latest)
 					if (latestThumbs) channel?.postMessage(latestThumbs)
 					return
-				case 'goto': {
-					const target = getSlides(editor).find((s) => s.id === cmd.id)
-					return target && moveToSlide(editor, target)
-				}
+				case 'goto':
+					return moveToPosition(editor, cmd.pos)
 				case 'overview':
 					if (!$presenting.get()) {
 						// Not presenting: just show the whole canvas, or return to the current slide.
@@ -474,19 +556,21 @@ export function installPresentationControls(editor: Editor) {
 		}
 	}
 	const stopPublish = react('publish presenter state', () => {
-		const slides = getSlides(editor)
+		const slides = getSequence(editor)
 		const id = $currentSlideId.get()
-		const index = slides.findIndex((s) => s.id === id)
+		const index = resolveCurrentPos(editor)
+		$currentPos.get() // re-publish when the position changes (the same slide can repeat)
 		const cur = slides[index]
 		const next = slides[index + 1]
-		if (id !== lastSlideId) {
-			lastSlideId = id
+		if (index !== lastPos) {
+			lastPos = index
 			scheduleThumbs(TRANSITION_MS + 100) // after the camera settles
 		}
 		latest = {
 			kind: 'state',
 			slides: slides.map((s) => ({ id: s.id, title: getSlideTitle(editor, s) || 'Untitled' })),
 			currentId: id,
+			currentPos: index,
 			overview: $overview.get(),
 			presenting: $presenting.get(),
 			position: index + 1,

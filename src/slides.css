@@ -19,7 +19,10 @@
 .slides-row { display: flex; gap: 8px; cursor: grab; align-items: center; user-select: none; }
 .slides-row:hover { background: var(--tl-color-muted-2) !important; }
 .slides-row b { min-width: 1.5em; text-align: right; opacity: .6; }
-.slides-row-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+.slides-row-btn { font: inherit; font-size: 11px; background: none; border: 0; color: inherit; opacity: 0; cursor: pointer; padding: 0 3px; flex: none; }
+.slides-row:hover .slides-row-btn { opacity: .7; }
+.slides-row-btn:hover { opacity: 1 !important; }
+.slides-row-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
 .slides-actions { display: flex; gap: 4px; flex-wrap: wrap; }
 .slides-panel button:not(.tlui-button), .slides-panel input[type=number] { font: inherit; }
 .slides-actions button { flex: 1; padding: 4px 6px; cursor: pointer; }

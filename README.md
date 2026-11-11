@@ -38,8 +38,12 @@ non-localhost requests blocked.
 
 - `S` draws a slide (or use the toolbar). Move and resize them like any shape (aspect ratio is locked).
 - Put text, images, arrows etc. on top of a slide. Anything inside a slide's frame belongs to it.
-- Order is explicit: **drag rows in the left panel** to reorder (stored in each slide's `index`).
-  Canvas position does not matter.
+- Order is explicit: **drag rows in the left panel** to reorder. Canvas position does not matter.
+- **Return to a slide later:** hover a row and click **↺+** to add another visit at the end of the
+  talk, then drag it where you want it. Revisits show a ↺, the slide's canvas label lists all its
+  positions ("Slide 2, 5"), and the arrow keys, presenter window and counter follow the sequence.
+  Remove a revisit with **×** (a slide's last visit can't be removed). The sequence is saved in
+  the `.tldr` file. PDF export has one page per slide, not per visit.
 - `\` (or the **‹ Hide** button) hides the left panel; click the **☰ Slides** tab or press `\` again to bring it back. Remembered per browser.
 - `N` toggles the notes box for the current slide.
 - Arrows snap to slides: draw an arrow (`A`) from one slide's border to another's to show how ideas connect. Arrows follow when slides move.

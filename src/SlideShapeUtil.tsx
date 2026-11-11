@@ -12,7 +12,7 @@ import {
 	resizeBox,
 	useValue,
 } from 'tldraw'
-import { $overview, $presenting, moveToSlide, useSlides } from './presentation'
+import { $overview, $presenting, moveToSlide, useSequence } from './presentation'
 
 export const SLIDE_W = 1280
 export const SLIDE_H = 720
@@ -94,8 +94,9 @@ export class SlideShapeUtil extends ShapeUtil<SlideShape> {
 		const zoomLevel = useValue('zoom level', () => this.editor.getZoomLevel(), [this.editor])
 		const presenting = useValue($presenting)
 		const overview = useValue($overview)
-		const slides = useSlides()
-		const index = slides.findIndex((s) => s.id === shape.id)
+		const sequence = useSequence()
+		// Every position this slide has in the talk, e.g. "Slide 3, 7" when it is revisited.
+		const positions = sequence.flatMap((s, i) => (s.id === shape.id ? [i + 1] : []))
 		const handleLabelPointerDown = useCallback(() => this.editor.select(shape.id), [shape.id])
 		/* eslint-enable react-hooks/rules-of-hooks */
 
@@ -107,7 +108,7 @@ export class SlideShapeUtil extends ShapeUtil<SlideShape> {
 			<>
 				{!presenting && (
 					<div onPointerDown={handleLabelPointerDown} className="slide-shape-label">
-						{`Slide ${index + 1}`}
+						{`Slide ${positions.join(', ') || '–'}`}
 					</div>
 				)}
 				<SVGContainer>
