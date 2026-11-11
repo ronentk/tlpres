@@ -46,7 +46,7 @@ non-localhost requests blocked.
   the `.tldr` file. PDF export has one page per slide, not per visit.
 - `\` (or the **‹ Hide** button) hides the left panel; click the **☰ Slides** tab or press `\` again to bring it back. Remembered per browser.
 - `N` toggles the notes box for the current slide.
-- **Collapsible text box** (`C`, or the `>` tool): shows only its title until you click it. Click toggles open/closed, double-click edits the title and text (`Esc` to finish), drag moves it. Works in edit mode; in presentation mode it stays as it was when you left edit mode.
+- **Collapsible text box** (`C`, or the `>` tool): shows only its title until you click it. Click the title bar to toggle open/closed, double-click anywhere on it to edit the title and text (`Esc` to finish), drag moves it. Works in edit mode; in presentation mode it stays as it was when you left edit mode.
 - Arrows snap to slides: draw an arrow (`A`) from one slide's border to another's to show how ideas connect. Arrows follow when slides move.
 - Double-click a slide's edge, or click its row in the panel, to fly to it.
 

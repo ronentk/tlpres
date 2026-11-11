@@ -64,14 +64,22 @@ export class CollapsibleShapeUtil extends ShapeUtil<CollapsibleShape> {
 		return true
 	}
 
+	// Only a click on the header bar toggles. Clicking the body must not, otherwise the first click of
+	// a double-click would collapse the box and the second would land on empty canvas (which makes
+	// tldraw create a stray text shape).
 	override onClick(shape: CollapsibleShape) {
+		const local = this.editor.getPointInShapeSpace(shape, this.editor.inputs.getCurrentPagePoint())
+		if (local.y > COLLAPSED_H) return
 		return { id: shape.id, type: TYPE, props: { open: !shape.props.open } }
 	}
 
+	// Don't start editing here: tldraw does that itself right after this returns (canEdit is true),
+	// and it refuses (and creates a stray text shape instead) if the shape is already being edited.
 	override onDoubleClick(shape: CollapsibleShape) {
-		this.editor.setEditingShape(shape.id)
-		// Editing the text only makes sense while it is visible.
-		return shape.props.open ? undefined : { id: shape.id, type: TYPE, props: { open: true } }
+		// Editing the text only makes sense while it is visible, so make sure the box is open.
+		if (!shape.props.open) {
+			this.editor.updateShape({ id: shape.id, type: TYPE, props: { open: true } })
+		}
 	}
 
 	override onResize(shape: CollapsibleShape, info: TLResizeInfo<CollapsibleShape>) {
