@@ -221,7 +221,7 @@ export function getSlideTitle(editor: Editor, slide: SlideShape): string {
 	const texts = editor
 		.getCurrentPageShapes()
 		.filter((s) => {
-			if (s.id === slide.id || !('richText' in s.props)) return false
+			if (s.id === slide.id || s.type === 'collapsible' || !('richText' in s.props)) return false
 			const sb = editor.getShapePageBounds(s.id)
 			return !!sb && b.containsPoint(sb.center)
 		})
