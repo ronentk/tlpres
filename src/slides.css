@@ -67,3 +67,13 @@
 .presenter-list { display: flex; flex-direction: column; gap: 3px; max-height: 28vh; overflow: auto; }
 .presenter-list button { flex: none; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .presenter-list b { display: inline-block; min-width: 1.6em; opacity: .7; }
+
+/* Collapsible text box */
+.collapsible-shape { box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; background: #fff; color: #1d1d1d; border: 2px solid #1d1d1d; border-radius: 10px; font-family: var(--tl-font-draw), sans-serif; cursor: pointer; }
+.collapsible-header { display: flex; align-items: center; gap: 10px; height: 48px; flex: none; padding: 0 14px; font-size: 22px; font-weight: 700; }
+.collapsible-chevron { width: 1em; flex: none; }
+.collapsible-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.collapsible-body { flex: 1; overflow: auto; padding: 0 16px 14px; font-size: 20px; line-height: 1.4; white-space: pre-wrap; cursor: default; }
+.collapsible-title-input, .collapsible-body-input { font: inherit; color: inherit; border: 1px solid #bbb; border-radius: 6px; background: #fafafa; }
+.collapsible-title-input { flex: 1; min-width: 0; padding: 2px 6px; font-weight: 700; }
+.collapsible-body-input { flex: 1; margin: 0 14px 12px; padding: 6px 8px; resize: none; font-size: 20px; font-weight: 400; line-height: 1.4; }

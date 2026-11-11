@@ -17,6 +17,8 @@ import {
 } from 'tldraw'
 import 'tldraw/tldraw.css'
 import { getAssetUrlsByMetaUrl } from '@tldraw/assets/urls'
+import { CollapsibleShapeTool } from './CollapsibleShapeTool'
+import { CollapsibleShapeUtil } from './CollapsibleShapeUtil'
 import { SlideShapeTool } from './SlideShapeTool'
 import { SlideShapeUtil } from './SlideShapeUtil'
 import { SlidesPanel } from './SlidesPanel'
@@ -85,9 +87,11 @@ const components: TLComponents = {
 	Toolbar: (props) => {
 		const tools = useTools()
 		const isSlideSelected = useIsToolSelected(tools['slide'])
+		const isCollapsibleSelected = useIsToolSelected(tools['collapsible'])
 		return (
 			<DefaultToolbar {...props}>
 				<TldrawUiMenuItem {...tools['slide']} isSelected={isSlideSelected} />
+				<TldrawUiMenuItem {...tools['collapsible']} isSelected={isCollapsibleSelected} />
 				<DefaultToolbarContent />
 			</DefaultToolbar>
 		)
@@ -97,6 +101,7 @@ const components: TLComponents = {
 		return (
 			<DefaultKeyboardShortcutsDialog {...props}>
 				<TldrawUiMenuItem {...tools['slide']} />
+				<TldrawUiMenuItem {...tools['collapsible']} />
 				<DefaultKeyboardShortcutsDialogContent />
 			</DefaultKeyboardShortcutsDialog>
 		)
@@ -121,12 +126,19 @@ const overrides: TLUiOverrides = {
 			kbd: 's',
 			onSelect: () => editor.setCurrentTool('slide'),
 		}
+		tools.collapsible = {
+			id: 'collapsible',
+			icon: 'chevron-right',
+			label: 'Collapsible text',
+			kbd: 'c',
+			onSelect: () => editor.setCurrentTool('collapsible'),
+		}
 		return tools
 	},
 }
 
-const shapeUtils = [SlideShapeUtil]
-const tools = [SlideShapeTool]
+const shapeUtils = [SlideShapeUtil, CollapsibleShapeUtil]
+const tools = [SlideShapeTool, CollapsibleShapeTool]
 
 export default function App() {
 	const presenting = useValue($presenting)
