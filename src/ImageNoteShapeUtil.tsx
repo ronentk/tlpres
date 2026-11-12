@@ -10,6 +10,8 @@ import {
 	TLResizeInfo,
 	TLRichText,
 	TLShape,
+	createShapePropsMigrationIds,
+	createShapePropsMigrationSequence,
 	renderHtmlFromRichText,
 	renderPlaintextFromRichText,
 	resizeBox,
@@ -21,8 +23,10 @@ import {
 } from 'tldraw'
 
 const TYPE = 'imagenote' as const
-/** Height of the text area that opens under the image. */
+/** Default height of the text area that opens under the image. */
 export const NOTE_H = 150
+const MIN_NOTE_H = 60
+const migrationIds = createShapePropsMigrationIds(TYPE, { NoteHeight: 1 })
 
 declare module 'tldraw' {
 	export interface TLGlobalShapePropsMap {
@@ -34,6 +38,8 @@ declare module 'tldraw' {
 			assetId: TLAssetId | null
 			richText: TLRichText
 			open: boolean
+			/** Height of the text area under the image (resizable when open). */
+			noteH: number
 		}
 	}
 }
@@ -50,7 +56,22 @@ export class ImageNoteShapeUtil extends ShapeUtil<ImageNoteShape> {
 		assetId: T.string.nullable() as any,
 		richText: richTextValidator,
 		open: T.boolean,
+		noteH: T.number,
 	}
+
+	static override migrations = createShapePropsMigrationSequence({
+		sequence: [
+			{
+				id: migrationIds.NoteHeight,
+				up(props: any) {
+					props.noteH = NOTE_H
+				},
+				down(props: any) {
+					delete props.noteH
+				},
+			},
+		],
+	})
 
 	override hideRotateHandle() {
 		return true
@@ -60,11 +81,11 @@ export class ImageNoteShapeUtil extends ShapeUtil<ImageNoteShape> {
 	}
 
 	getDefaultProps(): ImageNoteShape['props'] {
-		return { w: 400, h: 300, assetId: null, richText: toRichText('Double-click to edit this text.'), open: false }
+		return { w: 400, h: 300, assetId: null, richText: toRichText('Double-click to edit this text.'), open: false, noteH: NOTE_H }
 	}
 
 	private totalH(s: ImageNoteShape) {
-		return s.props.h + (s.props.open ? NOTE_H : 0)
+		return s.props.h + (s.props.open ? s.props.noteH : 0)
 	}
 
 	getGeometry(shape: ImageNoteShape): Geometry2d {
@@ -85,26 +106,34 @@ export class ImageNoteShapeUtil extends ShapeUtil<ImageNoteShape> {
 		if (!shape.props.open) this.editor.updateShape({ id: shape.id, type: TYPE, props: { open: true } })
 	}
 
-	// Keep the image's aspect ratio; the text area keeps its fixed height.
+	// Dragging the top/bottom handle of an open note resizes only the text area (image aspect ratio
+	// is untouched). Dragging a side or corner handle scales the image (keeping its aspect ratio)
+	// and leaves the text area height alone.
 	override onResize(shape: ImageNoteShape, info: TLResizeInfo<ImageNoteShape>) {
+		const { handle, scaleY } = info
+		if (handle === 'bottom' || handle === 'top') {
+			if (!shape.props.open) return shape
+			const noteH = Math.max(MIN_NOTE_H, Math.round(this.totalH(shape) * Math.abs(scaleY) - shape.props.h))
+			return { ...shape, props: { ...shape.props, noteH } }
+		}
 		const resized = resizeBox(shape, info)
 		const w = Math.max(80, resized.props.w)
 		const h = (w * shape.props.h) / shape.props.w
-		const topMoved = info.handle.includes('top')
-		const dy = this.totalH(shape) - (h + (shape.props.open ? NOTE_H : 0))
+		const dy = this.totalH(shape) - (h + (shape.props.open ? shape.props.noteH : 0))
 		return {
 			...resized,
-			y: topMoved ? shape.y + dy : shape.y,
+			y: handle.includes('top') ? shape.y + dy : shape.y,
 			props: { ...resized.props, w, h },
 		}
 	}
 
 	component(shape: ImageNoteShape) {
-		const { w, h, assetId, richText, open } = shape.props
+		const { w, h, assetId, richText, open, noteH } = shape.props
 		/* eslint-disable react-hooks/rules-of-hooks */
 		const editing = useIsEditing(shape.id)
 		const isSelected = useValue('selected', () => this.editor.getOnlySelectedShapeId() === shape.id, [])
 		const { url } = useImageOrVideoAsset({ shapeId: shape.id, assetId, width: w })
+		const readonly = useValue('readonly', () => this.editor.getInstanceState().isReadonly, [])
 		/* eslint-enable react-hooks/rules-of-hooks */
 
 		return (
@@ -116,7 +145,7 @@ export class ImageNoteShapeUtil extends ShapeUtil<ImageNoteShape> {
 					{url ? <img src={url} draggable={false} alt="" /> : null}
 				</div>
 				{open && (
-					<div className="imagenote-body" style={{ height: NOTE_H }}>
+					<div className="imagenote-body" style={{ height: noteH }}>
 						{editing ? (
 							<RichTextLabel
 								shapeId={shape.id}
@@ -132,7 +161,7 @@ export class ImageNoteShapeUtil extends ShapeUtil<ImageNoteShape> {
 								wrap
 								classNamePrefix="collapsible"
 								textWidth={w - 32}
-								textHeight={NOTE_H - 16}
+								textHeight={noteH - 16}
 							/>
 						) : (
 							<div
@@ -141,6 +170,38 @@ export class ImageNoteShapeUtil extends ShapeUtil<ImageNoteShape> {
 							/>
 						)}
 					</div>
+				)}
+				{open && !readonly && (
+					// Grip along the bottom edge: drag to change the text area height. tldraw hides its own
+					// resize handles while text is being edited, so this works in that state too.
+					<div
+						className="imagenote-grip"
+						title="Drag to resize the text box"
+						onPointerDown={(e) => {
+							e.stopPropagation()
+							e.preventDefault()
+							const el = e.currentTarget
+							el.setPointerCapture(e.pointerId)
+							const startY = e.clientY
+							const startH = noteH
+							const move = (ev: PointerEvent) => {
+								const dy = (ev.clientY - startY) / this.editor.getZoomLevel()
+								this.editor.updateShape({
+									id: shape.id,
+									type: TYPE,
+									props: { noteH: Math.max(MIN_NOTE_H, Math.round(startH + dy)) },
+								})
+							}
+							const up = () => {
+								el.removeEventListener('pointermove', move)
+								el.removeEventListener('pointerup', up)
+								el.removeEventListener('pointercancel', up)
+							}
+							el.addEventListener('pointermove', move)
+							el.addEventListener('pointerup', up)
+							el.addEventListener('pointercancel', up)
+						}}
+					/>
 				)}
 			</HTMLContainer>
 		)
@@ -153,13 +214,13 @@ export class ImageNoteShapeUtil extends ShapeUtil<ImageNoteShape> {
 	}
 
 	override toSvg(shape: ImageNoteShape) {
-		const { w, h, open, richText } = shape.props
+		const { w, h, open, richText, noteH } = shape.props
 		return (
 			<g fontFamily="sans-serif" fill="#1d1d1d">
 				<SvgImage shape={shape} />
 				{open && (
 					<>
-						<rect y={h} width={w} height={NOTE_H} fill="#fff" stroke="#1d1d1d" strokeWidth={2} />
+						<rect y={h} width={w} height={noteH} fill="#fff" stroke="#1d1d1d" strokeWidth={2} />
 						{renderPlaintextFromRichText(this.editor, richText)
 							.split('\n')
 							.map((line, i) => (

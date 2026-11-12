@@ -47,7 +47,7 @@ non-localhost requests blocked.
 - `\` (or the **‹ Hide** button) hides the left panel; click the **☰ Slides** tab or press `\` again to bring it back. Remembered per browser.
 - `N` toggles the notes box for the current slide.
 - **Collapsible text box** (`C`, or the `>` tool): shows only its title until you click it. Click the title bar to toggle open/closed, double-click the title to edit it, or the text to edit it with formatting (`Cmd/Ctrl+B` bold, `+I` italic, `+U` underline, plus tldraw's toolbar for lists, links and more; `Esc` to finish), drag moves it. Works in edit mode, and clicking the title bar also toggles it while presenting (editing is blocked there).
-- **Image with a toggleable text box**: drop an image on the canvas, right-click it and choose *Make image toggleable*. Click the image to open or close a text box underneath (double-click to edit it, same formatting as above). Also toggles while presenting. Resizing keeps the image's aspect ratio. Image/PDF export shows the text without formatting.
+- **Image with a toggleable text box**: drop an image on the canvas, right-click it and choose *Make image toggleable*. Click the image to open or close a text box underneath (double-click to edit it, same formatting as above). Also toggles while presenting. Drag the grip along the bottom edge of the open text box to change its height (works while editing); resizing from the corners or sides scales the image and keeps its aspect ratio. Image/PDF export shows the text without formatting.
 - Arrows snap to slides: draw an arrow (`A`) from one slide's border to another's to show how ideas connect. Arrows follow when slides move.
 - Double-click a slide's edge, or click its row in the panel, to fly to it.
 
