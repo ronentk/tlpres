@@ -428,6 +428,39 @@
       "created_at": "2026-11-10T15:11:07.304499-05:00",
       "updated_at": "2026-11-10T15:11:07.304499-05:00",
       "metadata_json": "{\"confidence\":90}"
+    },
+    {
+      "id": 40,
+      "change_id": "8fa8664a-128c-41bd-aafa-e556b75cf868",
+      "node_type": "goal",
+      "title": "Image toggle shape + toggle clicks while presenting",
+      "description": null,
+      "status": "pending",
+      "created_at": "2026-11-12T09:02:55.930809-05:00",
+      "updated_at": "2026-11-12T09:02:55.930809-05:00",
+      "metadata_json": "{\"branch\":\"main\",\"confidence\":85}"
+    },
+    {
+      "id": 41,
+      "change_id": "3e9b3ffd-4ac4-46e4-bfc0-a7e8c1edd8b8",
+      "node_type": "action",
+      "title": "ImageNoteShapeUtil + toggle clicks in readonly (src/toggle.ts)",
+      "description": null,
+      "status": "pending",
+      "created_at": "2026-11-12T09:03:48.801971-05:00",
+      "updated_at": "2026-11-12T09:03:48.801971-05:00",
+      "metadata_json": "{\"branch\":\"main\",\"confidence\":80}"
+    },
+    {
+      "id": 42,
+      "change_id": "272be87e-e8c1-449f-87cd-4525ec9162ac",
+      "node_type": "outcome",
+      "title": "Image note + presenting toggle verified in headless chromium; build ok",
+      "description": null,
+      "status": "pending",
+      "created_at": "2026-11-12T09:06:04.632084-05:00",
+      "updated_at": "2026-11-12T09:06:04.632084-05:00",
+      "metadata_json": "{\"branch\":\"main\",\"confidence\":90}"
     }
   ],
   "edges": [
@@ -749,6 +782,17 @@
       "weight": 1.0,
       "rationale": "result",
       "created_at": "2026-09-28T21:28:25.308191-04:00"
+    },
+    {
+      "id": 30,
+      "from_node_id": 40,
+      "to_node_id": 41,
+      "from_change_id": "8fa8664a-128c-41bd-aafa-e556b75cf868",
+      "to_change_id": "3e9b3ffd-4ac4-46e4-bfc0-a7e8c1edd8b8",
+      "edge_type": "leads_to",
+      "weight": 1.0,
+      "rationale": "implements",
+      "created_at": "2026-11-12T09:06:04.640807-05:00"
     }
   ]
 }

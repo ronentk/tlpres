@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import {
+	DefaultContextMenu,
+	DefaultContextMenuContent,
 	DefaultKeyboardShortcutsDialog,
 	DefaultKeyboardShortcutsDialogContent,
 	DefaultToolbar,
@@ -8,6 +10,7 @@ import {
 	Editor,
 	TLComponents,
 	TLUiOverrides,
+	createShapeId,
 	Tldraw,
 	TldrawUiMenuItem,
 	useEditor,
@@ -19,6 +22,7 @@ import 'tldraw/tldraw.css'
 import { getAssetUrlsByMetaUrl } from '@tldraw/assets/urls'
 import { CollapsibleShapeTool } from './CollapsibleShapeTool'
 import { CollapsibleShapeUtil } from './CollapsibleShapeUtil'
+import { ImageNoteShapeUtil } from './ImageNoteShapeUtil'
 import { SlideShapeTool } from './SlideShapeTool'
 import { SlideShapeUtil } from './SlideShapeUtil'
 import { SlidesPanel } from './SlidesPanel'
@@ -79,7 +83,42 @@ function PresentationOverlay() {
 	)
 }
 
+function ImageToggleItem() {
+	const editor = useEditor()
+	const isImage = useValue('one image selected', () => {
+		const s = editor.getOnlySelectedShape()
+		return !!s && s.type === 'image'
+	}, [editor])
+	if (!isImage) return null
+	return <TldrawUiMenuItem id="image-to-toggle" label="Make image toggleable" onSelect={() => makeImageToggleable(editor)} />
+}
+
+// Replace the selected image with an image note that shows a text box when clicked.
+function makeImageToggleable(editor: Editor) {
+	const img = editor.getOnlySelectedShape() as any
+	if (!img || img.type !== 'image') return
+	editor.run(() => {
+		const id = createShapeId()
+		editor.createShape({
+			id,
+			type: 'imagenote',
+			x: img.x,
+			y: img.y,
+			parentId: img.parentId,
+			props: { w: img.props.w, h: img.props.h, assetId: img.props.assetId },
+		})
+		editor.deleteShape(img.id)
+		editor.select(id)
+	})
+}
+
 const components: TLComponents = {
+	ContextMenu: (props) => (
+		<DefaultContextMenu {...props}>
+			<ImageToggleItem />
+			<DefaultContextMenuContent />
+		</DefaultContextMenu>
+	),
 	HelperButtons: SlidesPanel,
 	Minimap: null,
 	InFrontOfTheCanvas: PresentationOverlay,
@@ -137,7 +176,7 @@ const overrides: TLUiOverrides = {
 	},
 }
 
-const shapeUtils = [SlideShapeUtil, CollapsibleShapeUtil]
+const shapeUtils = [SlideShapeUtil, CollapsibleShapeUtil, ImageNoteShapeUtil]
 const tools = [SlideShapeTool, CollapsibleShapeTool]
 
 export default function App() {

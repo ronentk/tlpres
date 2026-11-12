@@ -18,6 +18,8 @@ import {
 	elapsedMs,
 } from './presenterProtocol'
 import { blobToDataUrl, renderSlide } from './fileio'
+import { COLLAPSED_H } from './CollapsibleShapeUtil'
+import { toggleOpen } from './toggle'
 import type { SlideShape } from './SlideShapeUtil'
 
 export const TRANSITION_MS = 500
@@ -221,7 +223,7 @@ export function getSlideTitle(editor: Editor, slide: SlideShape): string {
 	const texts = editor
 		.getCurrentPageShapes()
 		.filter((s) => {
-			if (s.id === slide.id || s.type === 'collapsible' || !('richText' in s.props)) return false
+			if (s.id === slide.id || s.type === 'collapsible' || s.type === 'imagenote' || !('richText' in s.props)) return false
 			const sb = editor.getShapePageBounds(s.id)
 			return !!sb && b.containsPoint(sb.center)
 		})
@@ -481,6 +483,20 @@ export function installPresentationControls(editor: Editor) {
 	}
 	window.addEventListener('keydown', onKeyDown, { capture: true })
 
+	// While presenting (read-only) tldraw doesn't run shape onClick, so toggle collapsible boxes and
+	// image notes here: a plain click on their header / image part opens or closes them.
+	const onToggleClick = (e: MouseEvent) => {
+		if (!$presenting.get() || $overview.get()) return
+		if (!editor.getContainer().contains(e.target as Node)) return
+		const pt = editor.screenToPage({ x: e.clientX, y: e.clientY })
+		const shape = editor.getShapeAtPoint(pt, { hitInside: true, margin: 0 })
+		if (!shape || (shape.type !== 'collapsible' && shape.type !== 'imagenote')) return
+		const local = editor.getPointInShapeSpace(shape, pt)
+		const zone = shape.type === 'collapsible' ? COLLAPSED_H : (shape as any).props.h
+		if (local.y <= zone) toggleOpen(editor, shape.id)
+	}
+	window.addEventListener('click', onToggleClick, { capture: true })
+
 	const onResize = () => refit(editor)
 	window.addEventListener('resize', onResize)
 
@@ -597,6 +613,7 @@ export function installPresentationControls(editor: Editor) {
 		stopSideEffect()
 		stopPublish()
 		window.removeEventListener('keydown', onKeyDown, { capture: true })
+		window.removeEventListener('click', onToggleClick, { capture: true })
 		window.removeEventListener('resize', onResize)
 		channel?.close()
 	}
