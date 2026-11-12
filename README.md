@@ -3,6 +3,18 @@
 Slides are 16:9 frames on one infinite tldraw canvas. Step through them with the arrow keys, or
 zoom and pan freely to show how ideas relate. Static site, no backend.
 
+## Link previews (open graph images)
+
+Pasted links become cards that show only the URL, because a browser page can't read other sites' metadata. Before the talk, fill them in from the command line:
+
+```bash
+npm run unfurl -- decks/my-talk.tldr           # cards without an image yet
+npm run unfurl -- decks/my-talk.tldr --force   # redo every card
+npm run unfurl -- decks/my-talk.tldr --remote  # keep image URLs instead of embedding them
+```
+
+It reads each link's title, description, `og:image` and favicon, embeds the images in the file (so the deck works offline) and makes the card taller to fit the image. A backup is saved as `<file>.bak` (git-ignored). Then import the file again. Cards on sites with no `og:image` stay as short cards. Needs network access when you run it, not when you present.
+
 ## Run
 
 ```bash
