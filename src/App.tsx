@@ -23,6 +23,7 @@ import { getAssetUrlsByMetaUrl } from '@tldraw/assets/urls'
 import { CollapsibleShapeTool } from './CollapsibleShapeTool'
 import { CollapsibleShapeUtil } from './CollapsibleShapeUtil'
 import { ImageNoteShapeUtil } from './ImageNoteShapeUtil'
+import { VIEWER } from './viewer'
 import { SlideShapeTool } from './SlideShapeTool'
 import { SlideShapeUtil } from './SlideShapeUtil'
 import { SlidesPanel } from './SlidesPanel'
@@ -145,6 +146,7 @@ const components: TLComponents = {
 			</DefaultKeyboardShortcutsDialog>
 		)
 	},
+	...(VIEWER ? { Toolbar: null, StylePanel: null, MainMenu: null, ActionsMenu: null, QuickActions: null, PageMenu: null, ContextMenu: null } : {}),
 }
 
 // The arrow keys themselves are handled in presentation.ts (capture phase, so they also work with
@@ -187,7 +189,8 @@ export default function App() {
 	return (
 		<div className="tldraw__editor">
 			<Tldraw
-				persistenceKey="tlpres-deck"
+				// Viewer: no saved copy, always the shipped deck.
+				persistenceKey={VIEWER ? undefined : 'tlpres-deck'}
 				licenseKey={licenseKey}
 				assetUrls={assetUrls}
 				shapeUtils={shapeUtils}
@@ -197,6 +200,7 @@ export default function App() {
 				hideUi={presenting}
 				onMount={(editor: Editor) => {
 					if (import.meta.env.DEV) (window as any).editor = editor // handy for debugging; dev only
+					if (VIEWER) editor.updateInstanceState({ isReadonly: true })
 					const cleanup = installPresentationControls(editor)
 					applyCameraMode(editor)
 					const goToFirst = () => {

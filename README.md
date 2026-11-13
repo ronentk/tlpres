@@ -15,6 +15,17 @@ npm run unfurl -- decks/my-talk.tldr --remote  # keep image URLs instead of embe
 
 It reads each link's title, description, `og:image` and favicon, embeds the images in the file (so the deck works offline) and makes the card taller to fit the image. A backup is saved as `<file>.bak` (git-ignored). Then import the file again. Cards on sites with no `og:image` stay as short cards. Needs network access when you run it, not when you present.
 
+## Publish read-only on GitHub Pages
+
+`.github/workflows/pages.yml` builds a read-only viewer of one deck and publishes it on every push to `main`. The viewer has no toolbar or editing, doesn't use anyone's saved browser copy, and keeps slide navigation, presentation mode (`P`) and toggle boxes. Speaker notes are removed from the published file (`scripts/strip-notes.mjs`).
+
+One-time setup in the GitHub repo:
+1. Settings > Pages > Build and deployment > Source: **GitHub Actions**.
+2. Settings > Secrets and variables > Actions > New repository secret: `TLDRAW_LICENSE_KEY` (your tldraw key). It ends up inside the public JavaScript, as for any browser app, so allow the Pages domain for the key in tldraw's dashboard.
+3. Set `DECK:` at the top of the workflow to the deck to publish, push to `main`, and open `https://<user>.github.io/<repo>/`.
+
+To try the viewer locally: `npm run dev` and open `http://localhost:5173/?view`, or `VITE_VIEWER=1 npm run build`.
+
 ## Run
 
 ```bash

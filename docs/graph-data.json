@@ -505,6 +505,28 @@
       "created_at": "2026-11-12T17:05:36.395107-05:00",
       "updated_at": "2026-11-12T17:05:36.395107-05:00",
       "metadata_json": "{\"branch\":\"main\",\"confidence\":90}"
+    },
+    {
+      "id": 47,
+      "change_id": "e0162c12-6d3d-4322-a831-1ec5850ef680",
+      "node_type": "goal",
+      "title": "Publish deck read-only: own repo + GitHub Pages + Action, viewer mode",
+      "description": null,
+      "status": "pending",
+      "created_at": "2026-11-13T14:37:46.348292-05:00",
+      "updated_at": "2026-11-13T14:37:46.348292-05:00",
+      "metadata_json": "{\"branch\":\"main\",\"confidence\":85}"
+    },
+    {
+      "id": 48,
+      "change_id": "2f6e1661-3c11-482c-9737-0429e19b6c0f",
+      "node_type": "outcome",
+      "title": "Viewer mode + Pages workflow built and tested from subpath; not pushed",
+      "description": null,
+      "status": "pending",
+      "created_at": "2026-11-13T14:40:45.905427-05:00",
+      "updated_at": "2026-11-13T14:40:45.905427-05:00",
+      "metadata_json": "{\"branch\":\"main\",\"confidence\":85}"
     }
   ],
   "edges": [

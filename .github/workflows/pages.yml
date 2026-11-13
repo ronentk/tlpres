@@ -1,0 +1,58 @@
+# Publishes a read-only copy of the deck to GitHub Pages on every push to main.
+#
+# One-time setup (repo Settings):
+#   1. Pages > Build and deployment > Source: "GitHub Actions"
+#   2. Secrets and variables > Actions > Secrets: add TLDRAW_LICENSE_KEY (your tldraw license key)
+#   3. Make sure the site's domain (<user>.github.io) is allowed for that key in tldraw's dashboard
+name: Publish deck
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  # The deck that gets published. Change this to publish a different file.
+  DECK: decks/sor-nov-26.tldr
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Prepare deck (copy, remove speaker notes)
+        run: |
+          cp "$DECK" public/deck.tldr
+          node scripts/strip-notes.mjs public/deck.tldr
+      - name: Build read-only viewer
+        run: npm run build
+        env:
+          VITE_VIEWER: '1'
+          VITE_TLDRAW_LICENSE_KEY: ${{ secrets.TLDRAW_LICENSE_KEY }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -20,6 +20,7 @@ import {
 import { blobToDataUrl, renderSlide } from './fileio'
 import { COLLAPSED_H } from './CollapsibleShapeUtil'
 import { toggleOpen } from './toggle'
+import { VIEWER } from './viewer'
 import type { SlideShape } from './SlideShapeUtil'
 
 export const TRANSITION_MS = 500
@@ -333,7 +334,7 @@ export function exitPresentation(editor: Editor) {
 	$presenting.set(false)
 	$overview.set(false)
 	$settled.set(true)
-	editor.updateInstanceState({ isReadonly: false })
+	editor.updateInstanceState({ isReadonly: VIEWER })
 	applyCameraMode(editor)
 	const cur = currentSlide(editor)
 	if (wasOverview && cur) moveToSlide(editor, cur)

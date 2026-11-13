@@ -27,6 +27,7 @@ import {
 	useNow,
 	useSequence,
 } from './presentation'
+import { VIEWER } from './viewer'
 import { exportDeck, exportPdf, importDeck } from './fileio'
 
 // Side panel in the `HelperButtons` slot: ordered slide list (drag to reorder), speaker notes,
@@ -144,7 +145,7 @@ export const SlidesPanel = track(() => {
 							key={`${i}-${slide.id}`}
 							role="button"
 							tabIndex={0}
-							draggable
+							draggable={!VIEWER}
 							data-pos={i}
 							className={'slides-panel-button slides-row' + (overPos === i ? ' drop-target' : '')}
 							onClick={() => moveToPosition(editor, i)}
@@ -165,7 +166,7 @@ export const SlidesPanel = track(() => {
 								{isRepeat && <span title="Return visit">↺ </span>}
 								{getSlideTitle(editor, slide) || 'Untitled'}
 							</span>
-							{visits > 1 && isRepeat && (
+							{!VIEWER && visits > 1 && isRepeat && (
 								<button
 									className="slides-row-btn"
 									title="Remove this visit"
@@ -177,6 +178,7 @@ export const SlidesPanel = track(() => {
 									×
 								</button>
 							)}
+							{!VIEWER && (
 							<button
 								className="slides-row-btn"
 								title="Add another visit to this slide at the end (then drag it into place)"
@@ -187,6 +189,7 @@ export const SlidesPanel = track(() => {
 							>
 								↺+
 							</button>
+							)}
 						</div>
 					)
 				})}
@@ -196,10 +199,10 @@ export const SlidesPanel = track(() => {
 				<button onClick={() => enterPresentation(editor)} disabled={!sequence.length}>
 					Present (P)
 				</button>
-				<button onClick={() => $notesOpen.set(!notesOpen)}>Notes (N)</button>
+				{!VIEWER && <button onClick={() => $notesOpen.set(!notesOpen)}>Notes (N)</button>}
 			</div>
 
-			{notesOpen && (
+			{!VIEWER && notesOpen && (
 				<div className="slides-notes">
 					{notesSlide ? (
 						<textarea
@@ -218,7 +221,7 @@ export const SlidesPanel = track(() => {
 				</div>
 			)}
 
-			<details className="slides-settings">
+			{!VIEWER && <details className="slides-settings">
 				<summary>Timer, camera, files</summary>
 				<div className="slides-actions">
 					<button onClick={timer.running ? pauseTimer : startTimer}>{timer.running ? 'Pause' : 'Start'}</button>
@@ -265,7 +268,7 @@ export const SlidesPanel = track(() => {
 						}
 					}}
 				/>
-			</details>
+			</details>}
 		</div>
 	)
 })
