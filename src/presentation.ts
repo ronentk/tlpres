@@ -484,10 +484,11 @@ export function installPresentationControls(editor: Editor) {
 	}
 	window.addEventListener('keydown', onKeyDown, { capture: true })
 
-	// While presenting (read-only) tldraw doesn't run shape onClick, so toggle collapsible boxes and
+	// While read-only (presenting, or the published viewer) tldraw doesn't run shape onClick, so toggle collapsible boxes and
 	// image notes here: a plain click on their header / image part opens or closes them.
 	const onToggleClick = (e: MouseEvent) => {
-		if (!$presenting.get() || $overview.get()) return
+		// Read-only covers both presenting and the published viewer (where tldraw won't run onClick).
+		if (!editor.getInstanceState().isReadonly || $overview.get()) return
 		if (!editor.getContainer().contains(e.target as Node)) return
 		const pt = editor.screenToPage({ x: e.clientX, y: e.clientY })
 		const shape = editor.getShapeAtPoint(pt, { hitInside: true, margin: 0 })

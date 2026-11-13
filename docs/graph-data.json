@@ -593,6 +593,28 @@
       "created_at": "2026-11-13T15:29:02.282110-05:00",
       "updated_at": "2026-11-13T15:29:02.282110-05:00",
       "metadata_json": "{\"branch\":\"tldraw-v3\",\"confidence\":90}"
+    },
+    {
+      "id": 55,
+      "change_id": "60f14a18-1127-4c54-8f50-709e8ad6d927",
+      "node_type": "action",
+      "title": "Fix toggles in non-presenting viewer: click listener keyed on readonly, not presenting",
+      "description": null,
+      "status": "pending",
+      "created_at": "2026-11-13T16:20:06.299096-05:00",
+      "updated_at": "2026-11-13T16:20:06.299096-05:00",
+      "metadata_json": "{\"branch\":\"tldraw-v3\",\"confidence\":85}"
+    },
+    {
+      "id": 56,
+      "change_id": "edc6b7f9-8568-4409-a5d6-6631da8009cd",
+      "node_type": "outcome",
+      "title": "Viewer toggles fixed: reproduced (no toggle) before, works after",
+      "description": null,
+      "status": "pending",
+      "created_at": "2026-11-13T16:21:18.497962-05:00",
+      "updated_at": "2026-11-13T16:21:18.497962-05:00",
+      "metadata_json": "{\"branch\":\"tldraw-v3\",\"confidence\":90}"
     }
   ],
   "edges": [
