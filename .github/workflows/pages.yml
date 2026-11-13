@@ -1,14 +1,15 @@
-# Publishes a read-only copy of the deck to GitHub Pages on every push to main.
+# Publishes a read-only copy of the deck to GitHub Pages on every push to the tldraw-v3 branch
+# (the publishing branch; main stays on the newer tldraw for editing).
 #
-# One-time setup (repo Settings): Pages > Build and deployment > Source: "GitHub Actions".
+# One-time setup (repo Settings): Pages > Build and deployment > Source: "GitHub Actions", and
+# Settings > Environments > github-pages > Deployment branches: allow tldraw-v3.
 # No license key is needed: this branch uses tldraw 3.x, which runs in production without one (and
 # shows the "made with tldraw" watermark).
 name: Publish deck
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
+    branches: [tldraw-v3]
 
 permissions:
   contents: read

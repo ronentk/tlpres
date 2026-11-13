@@ -17,11 +17,11 @@ It reads each link's title, description, `og:image` and favicon, embeds the imag
 
 ## Publish read-only on GitHub Pages
 
-`.github/workflows/pages.yml` builds a read-only viewer of one deck and publishes it on every push to `main`. The viewer has no toolbar or editing, doesn't use anyone's saved browser copy, and keeps slide navigation, presentation mode (`P`) and toggle boxes. Speaker notes are removed from the published file (`scripts/strip-notes.mjs`).
+`.github/workflows/pages.yml` (on the `tldraw-v3` branch only) builds a read-only viewer of one deck and publishes it on every push to that branch. The viewer has no toolbar or editing, doesn't use anyone's saved browser copy, and keeps slide navigation, presentation mode (`P`) and toggle boxes. Speaker notes are removed from the published file (`scripts/strip-notes.mjs`).
 
 This branch uses **tldraw 3.15**, which (unlike 4.x and later) runs in production without a license key and shows the "made with tldraw" watermark. Check tldraw's license text for the version you ship. Differences from the 5.x version: no underline formatting, arrow labels are plain text, and `.tldr` files saved by 5.x must be converted first (tldraw only migrates files upward). The workflow does that with `scripts/downgrade-deck.mjs`; to convert by hand: `node scripts/downgrade-deck.mjs in.tldr out.tldr`. Files saved by this version open fine in newer tldraw.
 
-One-time setup in the GitHub repo: Settings > Pages > Build and deployment > Source: **GitHub Actions**. Then set `DECK:` at the top of the workflow to the deck to publish, push, and open `https://<user>.github.io/<repo>/`.
+One-time setup in the GitHub repo: Settings > Pages > Build and deployment > Source: **GitHub Actions**. Also allow the `tldraw-v3` branch under Settings > Environments > github-pages > Deployment branches (the default only allows `main`). Then set `DECK:` at the top of the workflow to the deck to publish, push the `tldraw-v3` branch, and open `https://<user>.github.io/<repo>/`.
 
 To try the viewer locally: `npm run dev` and open `http://localhost:5173/?view`, or `VITE_VIEWER=1 npm run build`.
 
