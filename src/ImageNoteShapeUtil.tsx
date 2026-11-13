@@ -9,7 +9,7 @@ import {
 	TLAssetId,
 	TLResizeInfo,
 	TLRichText,
-	TLShape,
+	TLBaseShape,
 	createShapePropsMigrationIds,
 	createShapePropsMigrationSequence,
 	renderHtmlFromRichText,
@@ -28,23 +28,20 @@ export const NOTE_H = 150
 const MIN_NOTE_H = 60
 const migrationIds = createShapePropsMigrationIds(TYPE, { NoteHeight: 1 })
 
-declare module 'tldraw' {
-	export interface TLGlobalShapePropsMap {
-		[TYPE]: {
-			/** Image width; the text area has the same width. */
-			w: number
-			/** Image height. */
-			h: number
-			assetId: TLAssetId | null
-			richText: TLRichText
-			open: boolean
-			/** Height of the text area under the image (resizable when open). */
-			noteH: number
-		}
+export type ImageNoteShape = TLBaseShape<
+	typeof TYPE,
+	{
+		/** Image width; the text area has the same width. */
+		w: number
+		/** Image height. */
+		h: number
+		assetId: TLAssetId | null
+		richText: TLRichText
+		open: boolean
+		/** Height of the text area under the image (resizable when open). */
+		noteH: number
 	}
-}
-
-export type ImageNoteShape = TLShape<typeof TYPE>
+>
 
 // An image that, when clicked, opens a text box underneath it (click again to close).
 //  - click image: toggle (also while presenting)   - double-click: open and edit the text
@@ -97,7 +94,7 @@ export class ImageNoteShapeUtil extends ShapeUtil<ImageNoteShape> {
 	}
 
 	override onClick(shape: ImageNoteShape) {
-		const local = this.editor.getPointInShapeSpace(shape, this.editor.inputs.getCurrentPagePoint())
+		const local = this.editor.getPointInShapeSpace(shape, this.editor.inputs.currentPagePoint)
 		if (local.y > shape.props.h) return
 		return { id: shape.id, type: TYPE, props: { open: !shape.props.open } }
 	}
@@ -151,10 +148,10 @@ export class ImageNoteShapeUtil extends ShapeUtil<ImageNoteShape> {
 								shapeId={shape.id}
 								type="imagenote"
 								richText={richText}
-								fontFamily="var(--tl-font-draw)"
+								font="draw"
 								fontSize={20}
 								lineHeight={1.4}
-								textAlign="start"
+								align="start"
 								verticalAlign="start"
 								labelColor="#1d1d1d"
 								isSelected={isSelected}
@@ -207,10 +204,8 @@ export class ImageNoteShapeUtil extends ShapeUtil<ImageNoteShape> {
 		)
 	}
 
-	getIndicatorPath(shape: ImageNoteShape) {
-		const path = new Path2D()
-		path.rect(0, 0, shape.props.w, this.totalH(shape))
-		return path
+	indicator(shape: ImageNoteShape) {
+		return <rect width={shape.props.w} height={this.totalH(shape)} />
 	}
 
 	override toSvg(shape: ImageNoteShape) {

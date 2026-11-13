@@ -1,9 +1,8 @@
 # Publishes a read-only copy of the deck to GitHub Pages on every push to main.
 #
-# One-time setup (repo Settings):
-#   1. Pages > Build and deployment > Source: "GitHub Actions"
-#   2. Secrets and variables > Actions > Secrets: add TLDRAW_LICENSE_KEY (your tldraw license key)
-#   3. Make sure the site's domain (<user>.github.io) is allowed for that key in tldraw's dashboard
+# One-time setup (repo Settings): Pages > Build and deployment > Source: "GitHub Actions".
+# No license key is needed: this branch uses tldraw 3.x, which runs in production without one (and
+# shows the "made with tldraw" watermark).
 name: Publish deck
 
 on:
@@ -34,15 +33,14 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Prepare deck (copy, remove speaker notes)
+      - name: Prepare deck (convert to the 3.x file format, remove speaker notes)
         run: |
-          cp "$DECK" public/deck.tldr
+          node scripts/downgrade-deck.mjs "$DECK" public/deck.tldr
           node scripts/strip-notes.mjs public/deck.tldr
       - name: Build read-only viewer
         run: npm run build
         env:
           VITE_VIEWER: '1'
-          VITE_TLDRAW_LICENSE_KEY: ${{ secrets.TLDRAW_LICENSE_KEY }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

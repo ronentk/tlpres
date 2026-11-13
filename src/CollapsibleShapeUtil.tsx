@@ -9,7 +9,7 @@ import {
 	T,
 	TLResizeInfo,
 	TLRichText,
-	TLShape,
+	TLBaseShape,
 	atom,
 	createShapePropsMigrationIds,
 	createShapePropsMigrationSequence,
@@ -26,20 +26,6 @@ import {
 const TYPE = 'collapsible' as const
 export const COLLAPSED_H = 52
 
-declare module 'tldraw' {
-	export interface TLGlobalShapePropsMap {
-		[TYPE]: {
-			w: number
-			/** Height when open. Collapsed height is fixed (COLLAPSED_H). */
-			h: number
-			title: string
-			/** Formatted body text (tldraw rich text: bold, italic, underline, lists, links...). */
-			richText: TLRichText
-			open: boolean
-		}
-	}
-}
-
 // Which part is being edited: the title (a plain input) or the body (tldraw's rich-text editor).
 // Set on double-click from where you clicked. tldraw has only one "editing shape" per shape, so
 // we track the part ourselves.
@@ -48,7 +34,18 @@ const $editPart = atom<'title' | 'body'>('collapsible edit part', 'title')
 // Decks saved before the body became rich text stored it as a plain `body` string.
 const migrationIds = createShapePropsMigrationIds(TYPE, { RichTextBody: 1 })
 
-export type CollapsibleShape = TLShape<typeof TYPE>
+export type CollapsibleShape = TLBaseShape<
+	typeof TYPE,
+	{
+		w: number
+		/** Height when open. Collapsed height is fixed (COLLAPSED_H). */
+		h: number
+		title: string
+		/** Formatted body text (tldraw rich text: bold, italic, underline, lists, links...). */
+		richText: TLRichText
+		open: boolean
+	}
+>
 
 // A text box that shows only its title until you click it (works in edit mode).
 //  - click: toggle open/closed        - double-click: edit title and text
@@ -103,7 +100,7 @@ export class CollapsibleShapeUtil extends ShapeUtil<CollapsibleShape> {
 	// a double-click would collapse the box and the second would land on empty canvas (which makes
 	// tldraw create a stray text shape).
 	override onClick(shape: CollapsibleShape) {
-		const local = this.editor.getPointInShapeSpace(shape, this.editor.inputs.getCurrentPagePoint())
+		const local = this.editor.getPointInShapeSpace(shape, this.editor.inputs.currentPagePoint)
 		if (local.y > COLLAPSED_H) return
 		return { id: shape.id, type: TYPE, props: { open: !shape.props.open } }
 	}
@@ -112,7 +109,7 @@ export class CollapsibleShapeUtil extends ShapeUtil<CollapsibleShape> {
 	// and it refuses (and creates a stray text shape instead) if the shape is already being edited.
 	override onDoubleClick(shape: CollapsibleShape) {
 		// Where did the double-click land? Header = title, below it (when open) = body.
-		const local = this.editor.getPointInShapeSpace(shape, this.editor.inputs.getCurrentPagePoint())
+		const local = this.editor.getPointInShapeSpace(shape, this.editor.inputs.currentPagePoint)
 		$editPart.set(shape.props.open && local.y > COLLAPSED_H ? 'body' : 'title')
 		// Editing the text only makes sense while it is visible, so make sure the box is open.
 		if (!shape.props.open) {
@@ -189,10 +186,10 @@ export class CollapsibleShapeUtil extends ShapeUtil<CollapsibleShape> {
 								shapeId={shape.id}
 								type="collapsible"
 								richText={richText}
-								fontFamily="var(--tl-font-draw)"
+								font="draw"
 								fontSize={20}
 								lineHeight={1.4}
-								textAlign="start"
+								align="start"
 								verticalAlign="start"
 								labelColor="#1d1d1d"
 								isSelected={isSelected}
@@ -213,10 +210,8 @@ export class CollapsibleShapeUtil extends ShapeUtil<CollapsibleShape> {
 		)
 	}
 
-	getIndicatorPath(shape: CollapsibleShape) {
-		const path = new Path2D()
-		path.roundRect(0, 0, shape.props.w, shape.props.open ? shape.props.h : COLLAPSED_H, 10)
-		return path
+	indicator(shape: CollapsibleShape) {
+		return <rect width={shape.props.w} height={shape.props.open ? shape.props.h : COLLAPSED_H} rx={10} />
 	}
 
 	// Used by image / PDF export (the HTML above is not part of SVG export). Plain, no text wrapping.

@@ -7,7 +7,7 @@ import {
 	ShapeUtil,
 	T,
 	TLResizeInfo,
-	TLShape,
+	TLBaseShape,
 	getPerfectDashProps,
 	resizeBox,
 	useValue,
@@ -19,21 +19,17 @@ export const SLIDE_H = 720
 
 const SLIDE_TYPE = 'slide'
 
-// Teach TypeScript about our custom shape's props (tldraw's module-augmentation pattern).
-declare module 'tldraw' {
-	export interface TLGlobalShapePropsMap {
-		[SLIDE_TYPE]: {
-			w: number
-			h: number
-			/** Explicit presentation order (1-based). 0 = unassigned; a create-handler fills it in. */
-			index: number
-			/** Speaker notes, shown in the notes panel / presenter window. */
-			notes: string
-		}
+export type SlideShape = TLBaseShape<
+	typeof SLIDE_TYPE,
+	{
+		w: number
+		h: number
+		/** Explicit presentation order (1-based). 0 = unassigned; a create-handler fills it in. */
+		index: number
+		/** Speaker notes, shown in the notes panel / presenter window. */
+		notes: string
 	}
-}
-
-export type SlideShape = TLShape<typeof SLIDE_TYPE>
+>
 
 export class SlideShapeUtil extends ShapeUtil<SlideShape> {
 	static override type = SLIDE_TYPE
@@ -146,9 +142,7 @@ export class SlideShapeUtil extends ShapeUtil<SlideShape> {
 		)
 	}
 
-	getIndicatorPath(shape: SlideShape) {
-		const path = new Path2D()
-		path.rect(0, 0, shape.props.w, shape.props.h)
-		return path
+	indicator(shape: SlideShape) {
+		return <rect width={shape.props.w} height={shape.props.h} />
 	}
 }

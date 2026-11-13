@@ -11,11 +11,11 @@
     "unfurl": "node scripts/unfurl.mjs"
   },
   "dependencies": {
-    "@tldraw/assets": "^5.6.0",
+    "@tldraw/assets": "^3.15.6",
     "jspdf": "^4.2.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "tldraw": "^5.6.0"
+    "tldraw": "^3.15.6"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",

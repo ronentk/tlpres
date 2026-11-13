@@ -19,10 +19,9 @@ It reads each link's title, description, `og:image` and favicon, embeds the imag
 
 `.github/workflows/pages.yml` builds a read-only viewer of one deck and publishes it on every push to `main`. The viewer has no toolbar or editing, doesn't use anyone's saved browser copy, and keeps slide navigation, presentation mode (`P`) and toggle boxes. Speaker notes are removed from the published file (`scripts/strip-notes.mjs`).
 
-One-time setup in the GitHub repo:
-1. Settings > Pages > Build and deployment > Source: **GitHub Actions**.
-2. Settings > Secrets and variables > Actions > New repository secret: `TLDRAW_LICENSE_KEY` (your tldraw key). It ends up inside the public JavaScript, as for any browser app, so allow the Pages domain for the key in tldraw's dashboard.
-3. Set `DECK:` at the top of the workflow to the deck to publish, push to `main`, and open `https://<user>.github.io/<repo>/`.
+This branch uses **tldraw 3.15**, which (unlike 4.x and later) runs in production without a license key and shows the "made with tldraw" watermark. Check tldraw's license text for the version you ship. Differences from the 5.x version: no underline formatting, arrow labels are plain text, and `.tldr` files saved by 5.x must be converted first (tldraw only migrates files upward). The workflow does that with `scripts/downgrade-deck.mjs`; to convert by hand: `node scripts/downgrade-deck.mjs in.tldr out.tldr`. Files saved by this version open fine in newer tldraw.
+
+One-time setup in the GitHub repo: Settings > Pages > Build and deployment > Source: **GitHub Actions**. Then set `DECK:` at the top of the workflow to the deck to publish, push, and open `https://<user>.github.io/<repo>/`.
 
 To try the viewer locally: `npm run dev` and open `http://localhost:5173/?view`, or `VITE_VIEWER=1 npm run build`.
 

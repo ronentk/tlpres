@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { track, useEditor, useValue } from 'tldraw'
+import { stopEventPropagation, track, useEditor, useValue } from 'tldraw'
 import { elapsedMs, formatClock } from './presenterProtocol'
 import {
 	$currentPos,
@@ -90,7 +90,7 @@ export const SlidesPanel = track(() => {
 			<button
 				className="slides-panel-tab"
 				title="Show slide panel (\)"
-				onPointerDown={editor.markEventAsHandled}
+				onPointerDown={stopEventPropagation}
 				onClick={() => setPanelHidden(false)}
 			>
 				☰ Slides
@@ -124,7 +124,7 @@ export const SlidesPanel = track(() => {
 	}
 
 	return (
-		<div className="slides-panel" onPointerDown={editor.markEventAsHandled}>
+		<div className="slides-panel" onPointerDown={stopEventPropagation}>
 			<div className="slides-status">
 				<button className="slides-hide" title="Hide panel (\)" onClick={() => setPanelHidden(true)}>
 					‹ Hide

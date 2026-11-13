@@ -200,10 +200,11 @@ export default function App() {
 				hideUi={presenting}
 				onMount={(editor: Editor) => {
 					if (import.meta.env.DEV) (window as any).editor = editor // handy for debugging; dev only
-					if (VIEWER) editor.updateInstanceState({ isReadonly: true })
 					const cleanup = installPresentationControls(editor)
 					applyCameraMode(editor)
 					const goToFirst = () => {
+						// Viewer: lock the canvas only after the deck is in place.
+						if (VIEWER) editor.updateInstanceState({ isReadonly: true })
 						const first = getSlides(editor)[0]
 						if (first) moveToSlide(editor, first, { animate: false })
 					}
