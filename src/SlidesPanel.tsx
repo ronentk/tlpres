@@ -130,9 +130,12 @@ export const SlidesPanel = track(() => {
 					‹ Hide
 				</button>
 				<span>{sequence.length ? `${position || '–'} / ${sequence.length}` : 'No slides'}</span>
-				<span className={elapsed > target * 60_000 ? 'over' : ''}>
-					{formatClock(elapsed)} / {target}m
-				</span>
+				{/* The talk timer is for the presenter; the published viewer doesn't show it. */}
+				{!VIEWER && (
+					<span className={elapsed > target * 60_000 ? 'over' : ''}>
+						{formatClock(elapsed)} / {target}m
+					</span>
+				)}
 			</div>
 
 			<div className="slides-list scroll-light" ref={listRef}>

@@ -615,6 +615,17 @@
       "created_at": "2026-11-13T16:21:18.497962-05:00",
       "updated_at": "2026-11-13T16:21:18.497962-05:00",
       "metadata_json": "{\"branch\":\"tldraw-v3\",\"confidence\":90}"
+    },
+    {
+      "id": 57,
+      "change_id": "34dfcb3f-e274-4d47-adb7-7fac771c7925",
+      "node_type": "outcome",
+      "title": "Timer hidden in viewer panel only",
+      "description": null,
+      "status": "pending",
+      "created_at": "2026-11-13T16:23:26.456333-05:00",
+      "updated_at": "2026-11-13T16:23:26.456333-05:00",
+      "metadata_json": "{\"branch\":\"tldraw-v3\",\"confidence\":90}"
     }
   ],
   "edges": [
