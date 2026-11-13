@@ -21,8 +21,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # The deck that gets published. Change this to publish a different file.
-  DECK: decks/sor-nov-26.tldr
+  # The decks that get published, space-separated. Each one is served at /<repo>/<file-name>/,
+  # e.g. decks/sor-nov-26.tldr -> https://<host>/<repo>/sor-nov-26/
+  DECKS: decks/sor-nov-26.tldr
 
 jobs:
   build:
@@ -34,17 +35,13 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Prepare deck (convert to the 3.x file format, remove speaker notes)
-        run: |
-          node scripts/downgrade-deck.mjs "$DECK" public/deck.tldr
-          node scripts/strip-notes.mjs public/deck.tldr
-      - name: Build read-only viewer
-        run: npm run build
+      - name: Build read-only viewers (one per deck)
+        run: node scripts/build-site.mjs $DECKS
         env:
           VITE_VIEWER: '1'
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: site
 
   deploy:
     needs: build
