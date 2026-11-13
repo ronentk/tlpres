@@ -87,3 +87,13 @@
 .imagenote-body { flex: none; position: relative; overflow: auto; padding: 8px 16px; box-sizing: border-box; border: 2px solid #1d1d1d; border-top: 0; font-size: 20px; line-height: 1.4; cursor: default; }
 .imagenote-shape { position: relative; }
 .imagenote-grip { position: absolute; left: 0; right: 0; bottom: 0; height: 12px; cursor: ns-resize; background: linear-gradient(transparent, rgba(0,0,0,.12)); touch-action: none; }
+
+/* tldraw 3.x names its CSS variables without the `tl-` prefix used by 4.x+; alias the ones this app uses. */
+.tl-container {
+	--tl-color-background: var(--color-background);
+	--tl-color-low: var(--color-low);
+	--tl-color-muted-2: var(--color-muted-2);
+	--tl-color-selection-stroke: var(--color-selection-stroke);
+	--tl-color-text: var(--color-text);
+	--tl-radius-4: var(--radius-4);
+}

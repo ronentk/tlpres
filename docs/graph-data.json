@@ -571,6 +571,17 @@
       "created_at": "2026-11-13T15:20:53.290588-05:00",
       "updated_at": "2026-11-13T15:20:53.290588-05:00",
       "metadata_json": "{\"branch\":\"tldraw-v3\",\"confidence\":85}"
+    },
+    {
+      "id": 53,
+      "change_id": "2524dd2a-1201-47e9-9f20-8797072e6a64",
+      "node_type": "outcome",
+      "title": "3.x CSS vars lack tl- prefix -> slide frames invisible; aliased in slides.css",
+      "description": null,
+      "status": "pending",
+      "created_at": "2026-11-13T15:27:08.125869-05:00",
+      "updated_at": "2026-11-13T15:27:08.125869-05:00",
+      "metadata_json": "{\"branch\":\"tldraw-v3\",\"confidence\":90}"
     }
   ],
   "edges": [
