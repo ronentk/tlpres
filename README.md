@@ -116,6 +116,7 @@ Panel > "Timer, camera, files":
 - **Export .tldr**: the whole document (slides, order, notes, images). Do this before every talk.
 - **Import…**: replaces the current deck with a `.tldr` file.
 - **Export PDF**: one page per slide, in order.
+- **Export SVG**: the whole canvas as one SVG file (all slides and the space between them). Slide frames are not drawn.
 
 The browser also autosaves to local storage (`persistenceKey="tlpres-deck"`), but treat that as fragile.
 
@@ -139,4 +140,4 @@ published deck there, use **Import…** with the file (or clear that site's data
 
 `src/App.tsx` (Tldraw setup, license, assets) · `SlideShapeUtil.tsx` / `SlideShapeTool.ts` (slide shape and tool)
 · `SlidesPanel.tsx` (side panel) · `presentation.ts` (order, camera, presentation mode, keys, timer)
-· `PresenterView.tsx` + `presenterProtocol.ts` (notes window) · `fileio.ts` (.tldr / PDF) · `starterDeck.ts`.
+· `PresenterView.tsx` + `presenterProtocol.ts` (notes window) · `fileio.ts` (.tldr / PDF / SVG) · `starterDeck.ts`.

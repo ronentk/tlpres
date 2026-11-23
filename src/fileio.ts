@@ -106,3 +106,12 @@ export async function exportPdf(editor: Editor, onProgress?: (done: number, tota
 	}
 	pdf!.save(`deck-${stamp()}.pdf`)
 }
+
+/** The whole canvas (every shape on the page, not slide by slide) as one SVG file. */
+export async function exportSvg(editor: Editor) {
+	const shapes = editor.getCurrentPageShapes()
+	if (!shapes.length) throw new Error('The canvas is empty.')
+	const result = await editor.getSvgString(shapes, { background: true, darkMode: false, padding: 32 })
+	if (!result) throw new Error('Could not render the canvas.')
+	download(new Blob([result.svg], { type: 'image/svg+xml' }), `canvas-${stamp()}.svg`)
+}

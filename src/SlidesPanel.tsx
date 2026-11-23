@@ -28,7 +28,7 @@ import {
 	useSequence,
 } from './presentation'
 import { VIEWER } from './viewer'
-import { exportDeck, exportPdf, importDeck } from './fileio'
+import { exportDeck, exportPdf, exportSvg, importDeck } from './fileio'
 
 // Side panel in the `HelperButtons` slot: ordered slide list (drag to reorder), speaker notes,
 // timer, camera mode and file actions. Hidden entirely in presentation mode.
@@ -253,6 +253,9 @@ export const SlidesPanel = track(() => {
 						onClick={() => run('pdf', () => exportPdf(editor, (d, t) => setBusy(`PDF ${d}/${t}`)))}
 					>
 						{busy.startsWith('PDF') ? busy : 'Export PDF'}
+					</button>
+					<button disabled={!!busy} onClick={() => run('svg', () => exportSvg(editor))}>
+						Export SVG
 					</button>
 				</div>
 				<input
