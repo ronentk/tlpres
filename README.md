@@ -81,6 +81,8 @@ git switch tldraw-v3   # or main
 npm ci                 # then restart `npm run dev`
 ```
 
+It is `npm ci`, not `npm run ci`. `ci` is a built-in npm command, not a script in `package.json`.
+
 If you skip it, the wrong tldraw version runs your code. A typical symptom is importing a deck failing with `Could not read that file (migrationFailed)`. A 5.x deck can't be opened by 3.15. To go the other way, convert it with `node scripts/downgrade-deck.mjs in.tldr out.tldr` (on `tldraw-v3`).
 
 ## Run
