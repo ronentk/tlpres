@@ -26,6 +26,17 @@ One-time setup in the GitHub repo:
 
 To try the viewer locally: `npm run dev` and open `http://localhost:5173/?view`, or `VITE_VIEWER=1 npm run build`.
 
+## Switching branches
+
+`main` uses tldraw 5.x (needs a license key for production builds). The `tldraw-v3` branch uses tldraw 3.15, which runs without a key. Switching branches changes `package.json` but not `node_modules`, so reinstall after every switch:
+
+```bash
+git switch tldraw-v3   # or main
+npm ci                 # then restart `npm run dev`
+```
+
+If you skip it, the wrong tldraw version runs your code. A typical symptom is importing a deck failing with `Could not read that file (migrationFailed)`. A 5.x deck can't be opened by 3.15. To go the other way, convert it with `node scripts/downgrade-deck.mjs in.tldr out.tldr` (on `tldraw-v3`).
+
 ## Run
 
 ```bash
