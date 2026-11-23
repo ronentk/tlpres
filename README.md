@@ -72,6 +72,17 @@ dropped. Your original file is not touched.
 - Keep the deck up to date by merging your changes from `main` (or copying the `.tldr`) into
   `tldraw-v3` and pushing. App code changes can conflict because of the 3.x port.
 
+## Switching branches
+
+`main` uses tldraw 5.x (needs a license key for production builds). The `tldraw-v3` branch uses tldraw 3.15, which runs without a key. Switching branches changes `package.json` but not `node_modules`, so reinstall after every switch:
+
+```bash
+git switch tldraw-v3   # or main
+npm ci                 # then restart `npm run dev`
+```
+
+If you skip it, the wrong tldraw version runs your code. A typical symptom is importing a deck failing with `Could not read that file (migrationFailed)`. A 5.x deck can't be opened by 3.15. To go the other way, convert it with `node scripts/downgrade-deck.mjs in.tldr out.tldr` (on `tldraw-v3`).
+
 ## Run
 
 ```bash
