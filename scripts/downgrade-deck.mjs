@@ -26,12 +26,16 @@ const plain = (rt) => {
 	if (rt) walk(rt)
 	return out.join('').replace(/\n+$/, '')
 }
-// 3.15 rich text docs have no `attrs` on the root, and no underline mark.
+// 3.15 rich text docs have no underline mark, and no `dir` attribute (new in 5.x). Every other
+// attribute (link href, heading level, list start...) must stay: 3.15 reads them.
 const MARKS = new Set(['bold', 'italic', 'code', 'strike', 'highlight', 'link'])
 const stripAttrs = (n) => {
 	if (Array.isArray(n)) return n.forEach(stripAttrs)
 	if (n && typeof n === 'object') {
-		delete n.attrs
+		if (n.attrs) {
+			delete n.attrs.dir
+			if (!Object.keys(n.attrs).length) delete n.attrs
+		}
 		if (Array.isArray(n.marks)) {
 			const before = n.marks.length
 			n.marks = n.marks.filter((m) => MARKS.has(m.type))
